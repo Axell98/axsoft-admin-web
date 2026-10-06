@@ -2,7 +2,191 @@
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../vendor/livewire/livewire/src/Features/SupportPagination/views/*.blade.php';
+
+/*
+ * Solo tema claro. Las vistas de paginación de Laravel y Livewire traen estilos «dark:»;
+ * esta variante nunca se cumple, así que no se aplican ni siquiera si el sistema está en oscuro.
+ */
+@custom-variant dark (&:where([data-never-dark], [data-never-dark] *));
+
+html {
+    color-scheme: light;
+}
+
+[x-cloak] {
+    display: none !important;
+}
 
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+/*
+ * Editor de texto enriquecido (TipTap). El mismo contenido se muestra en la web del cliente,
+ * así que las tablas llevan estilos básicos aquí solo para el editor.
+ */
+.rich-editor .rich-content {
+    min-height: 9rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    outline: none;
+}
+
+.rich-editor .rich-content > * + * {
+    margin-top: 0.5rem;
+}
+
+.rich-editor .rich-content p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+    color: var(--color-slate-400);
+}
+
+.rich-editor .rich-content ul {
+    list-style: disc;
+    padding-inline-start: 1.25rem;
+}
+
+.rich-editor .rich-content ol {
+    list-style: decimal;
+    padding-inline-start: 1.25rem;
+}
+
+.rich-editor .rich-content a {
+    color: var(--color-indigo-600);
+    text-decoration: underline;
+}
+
+.rich-editor .rich-content table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    overflow: hidden;
+}
+
+.rich-editor .rich-content th,
+.rich-editor .rich-content td {
+    position: relative;
+    min-width: 3rem;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--color-slate-300);
+    vertical-align: top;
+}
+
+.rich-editor .rich-content th {
+    background-color: var(--color-slate-100);
+    font-weight: 600;
+    text-align: left;
+}
+
+.rich-editor .rich-content th > p,
+.rich-editor .rich-content td > p {
+    margin: 0;
+}
+
+.rich-editor .rich-content .selectedCell::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: color-mix(in srgb, var(--color-indigo-500) 15%, transparent);
+    pointer-events: none;
+}
+
+/* Color de fondo de la página: la opción activa del menú lateral usa el mismo para fundirse con ella. */
+:root {
+    --app-bg: var(--color-slate-50);
+}
+
+.app-bg {
+    background-color: var(--app-bg);
+}
+
+/* Menú lateral */
+.sidebar-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-slate-400);
+    transition:
+        background-color 0.15s,
+        color 0.15s;
+}
+
+.sidebar-link:hover {
+    background-color: rgb(255 255 255 / 0.07);
+    color: #fff;
+}
+
+.sidebar-link.is-active {
+    background-color: rgb(255 255 255 / 0.12);
+    color: #fff;
+}
+
+/*
+ * En pantallas grandes la opción activa es una pestaña del color de la página que llega
+ * hasta el borde del menú, con esquinas cóncavas arriba y abajo.
+ */
+@media (min-width: 64rem) {
+    .sidebar-link {
+        border-radius: 9999px 0 0 9999px;
+        padding-left: 1.25rem;
+    }
+
+    .sidebar-link.is-active {
+        z-index: 1;
+        background-color: var(--app-bg);
+        color: var(--color-slate-900);
+    }
+
+    .sidebar-link.is-active::before,
+    .sidebar-link.is-active::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        width: 1.25rem;
+        height: 1.25rem;
+        pointer-events: none;
+    }
+
+    .sidebar-link.is-active::before {
+        top: -1.25rem;
+        background: radial-gradient(circle at 0 0, transparent 1.2rem, var(--app-bg) 1.25rem);
+    }
+
+    .sidebar-link.is-active::after {
+        bottom: -1.25rem;
+        background: radial-gradient(circle at 0 100%, transparent 1.2rem, var(--app-bg) 1.25rem);
+    }
+}
+
+/* Entrada suave de la tarjeta del login */
+@keyframes fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.animate-fade-up {
+    animation: fade-up 0.5s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-fade-up {
+        animation: none;
+    }
 }
