@@ -23,3 +23,16 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Límites de subida de archivos (80 MB por archivo). Solo aplica con PHP como módulo de Apache;
+# con PHP-FPM/FastCGI se usa public/.user.ini.
+<IfModule mod_php.c>
+    php_value upload_max_filesize 80M
+    php_value post_max_size 82M
+    php_value max_execution_time 300
+</IfModule>
+<IfModule mod_php8.c>
+    php_value upload_max_filesize 80M
+    php_value post_max_size 82M
+    php_value max_execution_time 300
+</IfModule>

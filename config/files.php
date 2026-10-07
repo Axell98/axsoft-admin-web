@@ -15,7 +15,7 @@
 
 return [
 
-    'max_size_kb' => (int) env('FILES_MAX_SIZE_KB', 102400),
+    'max_size_kb' => (int) env('FILES_MAX_SIZE_KB', 81920),
 
     'types' => [
         'image' => ['jpg', 'jpeg', 'png', 'gif', 'webp'],

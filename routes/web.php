@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\FileDownloadController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\DashboardController;
 use App\Livewire\Admin\BannerManager;
+use App\Livewire\Admin\CategoryManager;
 use App\Livewire\Admin\CompanyForm;
 use App\Livewire\Admin\FileManager;
 use App\Livewire\Admin\ProjectForm;
@@ -27,6 +28,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/proyectos', ProjectIndex::class)->name('projects');
         Route::get('/proyectos/crear', ProjectForm::class)->name('projects.create');
         Route::get('/proyectos/{project}/editar', ProjectForm::class)->name('projects.edit');
+        Route::get('/categorias', CategoryManager::class)->name('categories');
         Route::get('/archivos', FileManager::class)->name('files');
         Route::get('/archivos/{mediaFile}/descargar', FileDownloadController::class)->name('files.download');
     });

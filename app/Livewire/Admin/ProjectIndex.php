@@ -46,13 +46,13 @@ class ProjectIndex extends Component
         $term = trim($this->search);
 
         $projects = Project::query()
-            ->with(['phases.mediaFile'])
+            ->with(['phases.mediaFile', 'category'])
             ->when($term !== '', function ($query) use ($term) {
                 $like = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $term);
 
                 $query->where(function ($query) use ($like) {
                     $query->whereRaw("title LIKE ? ESCAPE '!'", ["%{$like}%"])
-                        ->orWhereRaw("category LIKE ? ESCAPE '!'", ["%{$like}%"])
+                        ->orWhereHas('category', fn ($category) => $category->whereRaw("name LIKE ? ESCAPE '!'", ["%{$like}%"]))
                         ->orWhereRaw("location LIKE ? ESCAPE '!'", ["%{$like}%"]);
                 });
             })

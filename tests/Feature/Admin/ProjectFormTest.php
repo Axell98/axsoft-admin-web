@@ -3,6 +3,7 @@
 use App\Livewire\Admin\ProjectForm;
 use App\Models\MediaFile;
 use App\Models\Project;
+use App\Models\ProjectCategory;
 use App\Models\ProjectPhase;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
@@ -66,7 +67,7 @@ test('la pagina de crear carga el formulario', function () {
 });
 
 test('la pagina de editar carga los datos del proyecto', function () {
-    $project = Project::create(['title' => 'Torre Norte', 'slug' => 'torre-norte', 'location' => 'Miraflores', 'category' => 'Comercial', 'execution_percentage' => 60, 'year' => 2023]);
+    $project = Project::create(['title' => 'Torre Norte', 'slug' => 'torre-norte', 'location' => 'Miraflores', 'project_category_id' => ProjectCategory::create(['name' => 'Comercial', 'slug' => 'comercial'])->id, 'execution_percentage' => 60, 'year' => 2023]);
 
     $this->get(route('admin.projects.edit', $project))
         ->assertOk()
@@ -98,7 +99,7 @@ test('solo el titulo es obligatorio', function () {
     $project = createProject(['title' => 'Mínimo']);
 
     expect($project->location)->toBeNull()
-        ->and($project->category)->toBeNull()
+        ->and($project->project_category_id)->toBeNull()
         ->and($project->execution_percentage)->toBeNull()
         ->and($project->year)->toBeNull()
         ->and($project->description)->toBeNull()
@@ -107,11 +108,13 @@ test('solo el titulo es obligatorio', function () {
 });
 
 test('crea el proyecto con todos sus datos y vuelve al listado', function () {
+    $category = ProjectCategory::create(['name' => 'Residencial', 'slug' => 'residencial']);
+
     $component = Livewire::test(ProjectForm::class)
         ->set('title', 'Diseño Edificio Multifamiliar')
         ->set('description', '<div>Desarrollo y modelado <strong>3D</strong>.</div>')
         ->set('location', 'San Borja, Lima')
-        ->set('category', 'Residencial')
+        ->set('categoryId', (string) $category->id)
         ->set('executionPercentage', '100')
         ->set('year', '2020')
         ->set('isPublished', false)
@@ -127,7 +130,7 @@ test('crea el proyecto con todos sus datos y vuelve al listado', function () {
     expect($project->title)->toBe('Diseño Edificio Multifamiliar')
         ->and($project->description)->toBe('<div>Desarrollo y modelado <strong>3D</strong>.</div>')
         ->and($project->location)->toBe('San Borja, Lima')
-        ->and($project->category)->toBe('Residencial')
+        ->and($project->category->name)->toBe('Residencial')
         ->and($project->execution_percentage)->toBe(100)
         ->and($project->year)->toBe(2020)
         ->and($project->is_published)->toBeFalse();
@@ -206,11 +209,11 @@ test('valida los campos del proyecto', function () {
     Livewire::test(ProjectForm::class)
         ->set('title', str_repeat('a', 201))
         ->set('location', str_repeat('a', 151))
-        ->set('category', str_repeat('a', 101))
+        ->set('categoryId', '999999')
         ->set('executionPercentage', '101')
         ->set('year', '1800')
         ->call('save')
-        ->assertHasErrors(['title' => 'max', 'location' => 'max', 'category' => 'max', 'executionPercentage' => 'between', 'year' => 'between']);
+        ->assertHasErrors(['title' => 'max', 'location' => 'max', 'categoryId' => 'exists', 'executionPercentage' => 'between', 'year' => 'between']);
 });
 
 test('valida el porcentaje de ejecucion', function (string $value, bool $valid) {
@@ -668,4 +671,33 @@ test('el formulario no contiene formularios anidados (el boton de abajo debe seg
     expect(substr_count($html, '<form'))->toBe(1)
         ->and(substr_count($html, '</form>'))->toBe(1)
         ->and(substr_count($html, 'type="submit"'))->toBe(2);
+});
+
+// --- Categorías ---------------------------------------------------------------------
+
+test('el select muestra las categorias y la elegida queda guardada', function () {
+    $residencial = ProjectCategory::create(['name' => 'Residencial', 'slug' => 'residencial']);
+    ProjectCategory::create(['name' => 'Comercial', 'slug' => 'comercial']);
+
+    Livewire::test(ProjectForm::class)
+        ->assertSeeInOrder(['Sin categoría', 'Comercial', 'Residencial']);
+
+    $project = createProject(['categoryId' => (string) $residencial->id]);
+
+    Livewire::test(ProjectForm::class, ['project' => $project])->assertSet('categoryId', (string) $residencial->id);
+});
+
+test('se puede quitar la categoria de un proyecto', function () {
+    $category = ProjectCategory::create(['name' => 'Residencial', 'slug' => 'residencial']);
+    $project = createProject(['categoryId' => (string) $category->id]);
+
+    Livewire::test(ProjectForm::class, ['project' => $project])->set('categoryId', '')->call('save')->assertHasNoErrors();
+
+    expect($project->refresh()->project_category_id)->toBeNull();
+});
+
+test('rechaza una categoria que no existe al guardar', function () {
+    Livewire::test(ProjectForm::class)->set('title', 'Casa')->set('categoryId', '12345')->call('save')->assertHasErrors(['categoryId' => 'exists']);
+
+    expect(Project::count())->toBe(0);
 });

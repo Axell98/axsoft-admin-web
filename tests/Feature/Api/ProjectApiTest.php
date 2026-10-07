@@ -2,6 +2,7 @@
 
 use App\Models\MediaFile;
 use App\Models\Project;
+use App\Models\ProjectCategory;
 use Illuminate\Support\Facades\Storage;
 
 function apiProject(string $title, array $attributes = []): Project
@@ -32,7 +33,7 @@ test('el listado devuelve lo necesario para las tarjetas', function () {
     $file = MediaFile::create(['name' => 'portada.jpg', 'path' => 'files/portada.jpg', 'extension' => 'jpg', 'size' => 1]);
 
     $project = apiProject('Edificio', [
-        'category' => 'Residencial',
+        'project_category_id' => ProjectCategory::create(['name' => 'Residencial', 'slug' => 'residencial'])->id,
         'location' => 'San Borja, Lima',
         'execution_percentage' => 100,
         'year' => 2020,
@@ -43,6 +44,7 @@ test('el listado devuelve lo necesario para las tarjetas', function () {
     $this->getJson('/api/v1/projects')
         ->assertOk()
         ->assertJsonPath('data.0.category', 'Residencial')
+        ->assertJsonPath('data.0.category_slug', 'residencial')
         ->assertJsonPath('data.0.location', 'San Borja, Lima')
         ->assertJsonPath('data.0.execution_percentage', 100)
         ->assertJsonPath('data.0.year', 2020)
@@ -152,4 +154,51 @@ test('el detalle entrega el html con colores ya sanitizado', function () {
 
     $this->getJson('/api/v1/projects/colores')
         ->assertJsonPath('data.description', '<div><span style="color: #dc2626;">rojo</span></div>');
+});
+
+test('un proyecto sin categoria devuelve category nulo', function () {
+    apiProject('Casa');
+
+    $this->getJson('/api/v1/projects')->assertJsonPath('data.0.category', null)->assertJsonPath('data.0.category_slug', null);
+    $this->getJson('/api/v1/projects/casa')->assertJsonPath('data.category', null);
+});
+
+test('el detalle incluye la categoria', function () {
+    $category = ProjectCategory::create(['name' => 'Comercial', 'slug' => 'comercial']);
+    apiProject('Torre', ['project_category_id' => $category->id]);
+
+    $this->getJson('/api/v1/projects/torre')->assertJsonPath('data.category', 'Comercial')->assertJsonPath('data.category_slug', 'comercial');
+});
+
+test('el listado se filtra por categoria con su slug', function () {
+    $comercial = ProjectCategory::create(['name' => 'Comercial', 'slug' => 'comercial']);
+    $residencial = ProjectCategory::create(['name' => 'Residencial', 'slug' => 'residencial']);
+    apiProject('Torre', ['project_category_id' => $comercial->id]);
+    apiProject('Casa', ['project_category_id' => $residencial->id]);
+    apiProject('Suelto');
+
+    $this->getJson('/api/v1/projects?category=comercial')->assertJsonCount(1, 'data')->assertJsonPath('data.0.slug', 'torre');
+    $this->getJson('/api/v1/projects?category=no-existe')->assertOk()->assertJsonCount(0, 'data');
+    $this->getJson('/api/v1/projects')->assertJsonCount(3, 'data');
+    $this->getJson('/api/v1/projects?category=')->assertJsonCount(3, 'data');
+});
+
+test('las categorias publicas solo incluyen las que tienen proyectos visibles', function () {
+    $comercial = ProjectCategory::create(['name' => 'Comercial', 'slug' => 'comercial']);
+    $residencial = ProjectCategory::create(['name' => 'Residencial', 'slug' => 'residencial']);
+    $vacia = ProjectCategory::create(['name' => 'Sin proyectos', 'slug' => 'sin-proyectos']);
+    $oculta = ProjectCategory::create(['name' => 'Oculta', 'slug' => 'oculta']);
+
+    apiProject('Torre', ['project_category_id' => $comercial->id]);
+    apiProject('Oficinas', ['project_category_id' => $comercial->id]);
+    apiProject('Casa', ['project_category_id' => $residencial->id]);
+    apiProject('Secreto', ['project_category_id' => $oculta->id, 'is_published' => false]);
+
+    $this->getJson('/api/v1/project-categories')
+        ->assertOk()
+        ->assertHeader('Cache-Control', 'max-age=60, public')
+        ->assertExactJson(['data' => [
+            ['name' => 'Comercial', 'slug' => 'comercial', 'projects_count' => 2],
+            ['name' => 'Residencial', 'slug' => 'residencial', 'projects_count' => 1],
+        ]]);
 });

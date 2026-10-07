@@ -16,6 +16,7 @@ class ProjectController extends Controller
 
     /**
      * Listado paginado de los proyectos visibles, del más reciente al más antiguo.
+     * Con ?category={slug} se filtra por categoría.
      */
     public function index(Request $request): JsonResponse
     {
@@ -23,7 +24,8 @@ class ProjectController extends Controller
 
         $projects = Project::query()
             ->published()
-            ->with('phases.mediaFile')
+            ->with(['phases.mediaFile', 'category'])
+            ->when($request->string('category')->trim()->toString(), fn ($query, string $slug) => $query->whereHas('category', fn ($category) => $category->where('slug', $slug)))
             ->latest()
             ->latest('id')
             ->paginate($perPage)
@@ -41,7 +43,7 @@ class ProjectController extends Controller
     {
         $project = Project::query()
             ->published()
-            ->with(['phases.mediaFile', 'videoFile'])
+            ->with(['phases.mediaFile', 'videoFile', 'category'])
             ->where('slug', $slug)
             ->first();
 

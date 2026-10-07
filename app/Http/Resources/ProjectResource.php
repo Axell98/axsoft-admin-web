@@ -33,7 +33,8 @@ class ProjectResource extends JsonResource
         $data = [
             'slug' => $this->slug,
             'title' => $this->title,
-            'category' => $this->category,
+            'category' => $this->category?->name,
+            'category_slug' => $this->category?->slug,
             'location' => $this->location,
             'execution_percentage' => $this->execution_percentage,
             'year' => $this->year,

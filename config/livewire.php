@@ -130,7 +130,7 @@ return [
 
     'temporary_file_upload' => [
         'disk' => env('LIVEWIRE_TEMPORARY_FILE_UPLOAD_DISK'), // Example: 'local', 's3'             | Default: 'default'
-        'rules' => ['required', 'file', 'max:'.env('FILES_MAX_SIZE_KB', 102400)], // Mismo límite que config/files.php
+        'rules' => ['required', 'file', 'max:'.env('FILES_MAX_SIZE_KB', 81920)], // Mismo límite que config/files.php
         'directory' => null,                                  // Example: 'tmp'                     | Default: 'livewire-tmp'
         'middleware' => 'throttle:600,1',                      // Subidas masivas desde el gestor de archivos
         'preview_mimes' => [                                  // Supported file types for temporary pre-signed file URLs...

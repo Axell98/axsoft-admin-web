@@ -231,6 +231,9 @@ test('rechaza extensiones no permitidas', function (string $name) {
 })->with(['shell.php', 'pagina.html', 'icono.svg', 'virus.exe', 'sin-extension', 'doble.php.jpg.php']);
 
 test('rechaza archivos que superan el tamaño maximo', function () {
+    // Límite bajo para no depender del php.ini ni del tope de Livewire en la subida temporal.
+    config(['files.max_size_kb' => 1000]);
+
     $tooBigKb = MediaFile::maxUploadKb() + 1;
 
     Livewire::test(FileManager::class)

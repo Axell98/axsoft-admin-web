@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\MediaFile;
 use App\Models\Project;
+use App\Models\ProjectCategory;
 use App\Models\ProjectPhase;
 use App\Support\RichText;
 use App\Support\YouTube;
@@ -32,7 +33,8 @@ class ProjectForm extends Component
 
     public string $location = '';
 
-    public string $category = '';
+    /** Id de la categoría elegida; vacío = sin categoría. */
+    public string $categoryId = '';
 
     // Strings para aceptar el campo vacío mientras se escribe.
     public string $executionPercentage = '';
@@ -72,7 +74,7 @@ class ProjectForm extends Component
         $this->slug = $project->slug;
         $this->description = (string) $project->description;
         $this->location = (string) $project->location;
-        $this->category = (string) $project->category;
+        $this->categoryId = $project->project_category_id === null ? '' : (string) $project->project_category_id;
         $this->executionPercentage = $project->execution_percentage === null ? '' : (string) $project->execution_percentage;
         $this->year = $project->year === null ? '' : (string) $project->year;
         $this->isPublished = $project->is_published;
@@ -224,7 +226,7 @@ class ProjectForm extends Component
             'slug' => $this->slug !== '' ? $this->slug : Project::uniqueSlug($this->title, $this->projectId),
             'description' => $this->description !== '' ? $this->description : null,
             'location' => $this->blankToNull($this->location),
-            'category' => $this->blankToNull($this->category),
+            'project_category_id' => $this->categoryId !== '' ? (int) $this->categoryId : null,
             'execution_percentage' => $this->executionPercentage !== '' ? (int) $this->executionPercentage : null,
             'year' => $this->year !== '' ? (int) $this->year : null,
             'is_published' => $this->isPublished,
@@ -276,7 +278,7 @@ class ProjectForm extends Component
     {
         $this->title = trim($this->title);
         $this->location = trim($this->location);
-        $this->category = trim($this->category);
+        $this->categoryId = trim($this->categoryId);
         $this->executionPercentage = trim($this->executionPercentage);
         $this->year = trim($this->year);
         $this->description = RichText::clean($this->description) ?? '';
@@ -304,7 +306,7 @@ class ProjectForm extends Component
             'slug' => ['nullable', 'string', 'max:200', Rule::unique('projects', 'slug')->ignore($this->projectId)],
             'description' => ['nullable', 'string', 'max:20000'],
             'location' => ['nullable', 'string', 'max:150'],
-            'category' => ['nullable', 'string', 'max:100'],
+            'categoryId' => ['nullable', 'integer', 'exists:project_categories,id'],
             'executionPercentage' => ['nullable', 'integer', 'between:0,100'],
             'year' => ['nullable', 'integer', 'between:1900,'.(now()->year + 10)],
             'isPublished' => ['boolean'],
@@ -332,7 +334,8 @@ class ProjectForm extends Component
             'slug.max' => 'El slug no puede superar los 200 caracteres.',
             'description.max' => 'La descripción es demasiado larga.',
             'location.max' => 'La locación no puede superar los 150 caracteres.',
-            'category.max' => 'La categoría no puede superar los 100 caracteres.',
+            'categoryId.integer' => 'Elige una categoría de la lista.',
+            'categoryId.exists' => 'La categoría elegida ya no existe. Elige otra de la lista.',
             'executionPercentage.integer' => 'La ejecución debe ser un número entero.',
             'executionPercentage.between' => 'La ejecución debe estar entre 0 y 100.',
             'year.integer' => 'El año debe ser un número entero.',
@@ -426,6 +429,7 @@ class ProjectForm extends Component
         return view('livewire.admin.project-form', [
             'phaseCards' => $this->phaseCards(),
             'videoCard' => $this->videoCard(),
+            'categories' => ProjectCategory::query()->orderBy('name')->get(['id', 'name']),
             'slugSuggestion' => Str::slug($this->title),
             'maxPhases' => Project::MAX_PHASES,
         ])->title($this->projectId ? 'Editar proyecto' : 'Nuevo proyecto');

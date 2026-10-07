@@ -19,7 +19,7 @@ use Illuminate\Support\Str;
  * @property string $slug
  * @property string|null $description HTML ya sanitizado.
  * @property string|null $location
- * @property string|null $category
+ * @property int|null $project_category_id
  * @property int|null $execution_percentage
  * @property int|null $year
  * @property string|null $video_type file | youtube
@@ -29,13 +29,14 @@ use Illuminate\Support\Str;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read MediaFile|null $videoFile
+ * @property-read ProjectCategory|null $category
  */
 #[Fillable([
     'title',
     'slug',
     'description',
     'location',
-    'category',
+    'project_category_id',
     'execution_percentage',
     'year',
     'video_type',
@@ -66,6 +67,14 @@ class Project extends Model
     public function phases(): HasMany
     {
         return $this->hasMany(ProjectPhase::class)->orderBy('position')->orderBy('id');
+    }
+
+    /**
+     * @return BelongsTo<ProjectCategory, $this>
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(ProjectCategory::class, 'project_category_id');
     }
 
     /**

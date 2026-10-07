@@ -48,7 +48,26 @@
                 </div>
 
                 <x-field label="Locación" name="location" wire:model="location" maxlength="150" placeholder="Ej. San Borja, Lima" />
-                <x-field label="Categoría" name="category" wire:model="category" maxlength="100" placeholder="Ej. Residencial" />
+                <div>
+                    <label for="categoryId" class="mb-1.5 block text-sm font-medium text-slate-700">Categoría</label>
+                    <select
+                        id="categoryId"
+                        wire:model="categoryId"
+                        @class([
+                            'w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm shadow-xs outline-none transition focus:ring-4',
+                            'border-slate-300 focus:border-indigo-500 focus:ring-indigo-500/15' => ! $errors->has('categoryId'),
+                            'border-red-400 focus:border-red-500 focus:ring-red-500/15' => $errors->has('categoryId'),
+                        ])
+                    >
+                        <option value="">Sin categoría</option>
+                        @foreach ($categories as $category)
+                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('categoryId')
+                        <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
                 <div class="grid grid-cols-2 gap-5">
                     <x-field label="Ejecución (%)" name="executionPercentage" type="number" min="0" max="100" wire:model="executionPercentage" placeholder="100" />
                     <x-field label="Año" name="year" type="number" min="1900" wire:model="year" placeholder="{{ now()->year }}" />

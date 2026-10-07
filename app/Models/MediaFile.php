@@ -94,7 +94,7 @@ class MediaFile extends Model
     public static function maxUploadKb(): int
     {
         $configured = (int) config('files.max_size_kb');
-        $limit = ($configured > 0 ? $configured : 102400) * 1024;
+        $limit = ($configured > 0 ? $configured : 81920) * 1024;
 
         // En PHP, 0 o -1 significan «sin límite».
         foreach (['upload_max_filesize', 'post_max_size'] as $setting) {

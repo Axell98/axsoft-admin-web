@@ -3,6 +3,7 @@
 use App\Livewire\Admin\ProjectIndex;
 use App\Models\MediaFile;
 use App\Models\Project;
+use App\Models\ProjectCategory;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
@@ -35,7 +36,7 @@ test('muestra un estado vacio sin proyectos', function () {
 });
 
 test('lista los proyectos con sus datos principales', function () {
-    indexProject('Edificio Multifamiliar', ['category' => 'Residencial', 'location' => 'San Borja, Lima', 'year' => 2024, 'execution_percentage' => 80]);
+    indexProject('Edificio Multifamiliar', ['project_category_id' => ProjectCategory::create(['name' => 'Residencial', 'slug' => 'residencial'])->id, 'location' => 'San Borja, Lima', 'year' => 2024, 'execution_percentage' => 80]);
 
     Livewire::test(ProjectIndex::class)
         ->assertSee('Edificio Multifamiliar')
@@ -60,8 +61,11 @@ test('marca los proyectos ocultos', function () {
 });
 
 test('busca por titulo, categoria y locacion', function () {
-    indexProject('Torre Norte', ['category' => 'Comercial', 'location' => 'Miraflores']);
-    indexProject('Casa Sur', ['category' => 'Residencial', 'location' => 'Surco']);
+    $comercial = ProjectCategory::create(['name' => 'Comercial', 'slug' => 'comercial']);
+    $residencial = ProjectCategory::create(['name' => 'Residencial', 'slug' => 'residencial']);
+
+    indexProject('Torre Norte', ['project_category_id' => $comercial->id, 'location' => 'Miraflores']);
+    indexProject('Casa Sur', ['project_category_id' => $residencial->id, 'location' => 'Surco']);
 
     Livewire::test(ProjectIndex::class)
         ->set('search', 'torre')->assertSee('Torre Norte')->assertDontSee('Casa Sur')

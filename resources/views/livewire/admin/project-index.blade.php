@@ -68,7 +68,7 @@
                     </a>
 
                     <div class="flex-1 space-y-2 p-5">
-                        <p class="text-xs font-semibold tracking-wide text-indigo-600 uppercase">{{ $project->category ?: 'Sin categoría' }}</p>
+                        <p class="text-xs font-semibold tracking-wide text-indigo-600 uppercase">{{ $project->category?->name ?: 'Sin categoría' }}</p>
                         <h3 class="text-lg leading-snug font-semibold tracking-tight uppercase">
                             <a href="{{ route('admin.projects.edit', $project) }}" wire:navigate class="transition hover:text-indigo-600">{{ $project->title }}</a>
                         </h3>
