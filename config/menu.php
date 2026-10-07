@@ -27,9 +27,19 @@ return [
         'route' => 'admin.banners',
     ],
     [
+        'label' => 'Pop-up',
+        'icon' => 'popup',
+        'route' => 'admin.popup',
+    ],
+    [
         'label' => 'Proyectos',
         'icon' => 'layers',
         'route' => 'admin.projects',
+    ],
+    [
+        'label' => 'Testimonios',
+        'icon' => 'chat',
+        'route' => 'admin.testimonials',
     ],
     [
         'label' => 'Archivos',

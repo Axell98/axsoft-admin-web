@@ -27,6 +27,9 @@ class BannerManager extends Component
 {
     private const PICKER_STEP = 24;
 
+    /** slider (varias imágenes) | video (un solo video) */
+    public string $displayType = BannerSlider::TYPE_SLIDER;
+
     // Opciones del slider. El porcentaje es string para aceptar el campo vacío mientras se escribe.
     public string $screenPercentage = '100';
 
@@ -48,9 +51,6 @@ class BannerManager extends Component
     public bool $showPicker = false;
 
     public string $pickerSearch = '';
-
-    /** all | image | video */
-    public string $pickerType = 'all';
 
     public string $pickerFolder = '';
 
@@ -82,6 +82,7 @@ class BannerManager extends Component
     {
         $slider = BannerSlider::main();
 
+        $this->displayType = $slider->display_type;
         $this->screenPercentage = (string) $slider->screen_percentage;
         $this->showArrows = $slider->show_arrows;
         $this->showIndicators = $slider->show_indicators;
@@ -106,6 +107,26 @@ class BannerManager extends Component
         $this->dirty = false;
     }
 
+    /**
+     * Al cambiar el tipo solo se conservan los banners que sirven para el nuevo
+     * (imágenes para el slider, un video para el tipo video).
+     */
+    public function updatedDisplayType(): void
+    {
+        if (! in_array($this->displayType, BannerSlider::types(), true)) {
+            $this->displayType = BannerSlider::TYPE_SLIDER;
+        }
+
+        $before = count($this->slides);
+        $compatible = array_values(array_filter($this->slides, fn (array $slide) => $this->isCompatible($slide)));
+        $this->slides = $this->isVideo() ? array_slice($compatible, 0, 1) : $compatible;
+        $this->dirty = true;
+
+        if (count($this->slides) < $before) {
+            $this->dispatch('notify', message: 'Se quitaron los banners que no corresponden al tipo elegido');
+        }
+    }
+
     public function updatedScreenPercentage(): void
     {
         $this->dirty = true;
@@ -125,7 +146,9 @@ class BannerManager extends Component
 
     public function openPicker(): void
     {
-        $this->reset('pickerSearch', 'pickerType', 'pickerFolder', 'pickerSelected', 'showExternalForm', 'externalInput');
+        $this->reset('pickerSearch', 'pickerFolder', 'pickerSelected', 'showExternalForm', 'externalInput');
+        // Cada tipo admite un solo tipo de enlace: imagen para el slider, YouTube para el video.
+        $this->externalKind = $this->isVideo() ? 'youtube' : 'image';
         $this->pickerLimit = self::PICKER_STEP;
         $this->resetErrorBag();
         $this->showPicker = true;
@@ -142,11 +165,6 @@ class BannerManager extends Component
         $this->pickerLimit = self::PICKER_STEP;
     }
 
-    public function updatedPickerType(): void
-    {
-        $this->pickerLimit = self::PICKER_STEP;
-    }
-
     public function updatedPickerFolder(): void
     {
         $this->pickerLimit = self::PICKER_STEP;
@@ -159,6 +177,13 @@ class BannerManager extends Component
 
     public function togglePick(int $id): void
     {
+        // Un banner de video lleva un solo video: elegir otro reemplaza la selección.
+        if ($this->isVideo()) {
+            $this->pickerSelected = in_array($id, $this->pickerSelected, true) ? [] : [$id];
+
+            return;
+        }
+
         if (in_array($id, $this->pickerSelected, true)) {
             $this->pickerSelected = array_values(array_diff($this->pickerSelected, [$id]));
         } else {
@@ -173,7 +198,16 @@ class BannerManager extends Component
             ->get()
             ->sortBy(fn (MediaFile $file) => array_search($file->id, $this->pickerSelected, true));
 
+        $added = 0;
+
         foreach ($files as $file) {
+            if ($this->isVideo()) {
+                $this->slides = [$this->newSlide(['type' => BannerSlide::TYPE_FILE, 'media_file_id' => $file->id])];
+                $added = 1;
+
+                break;
+            }
+
             if (! $this->hasRoom()) {
                 break;
             }
@@ -182,9 +216,10 @@ class BannerManager extends Component
                 'type' => BannerSlide::TYPE_FILE,
                 'media_file_id' => $file->id,
             ]);
+            $added++;
         }
 
-        $this->afterAdding(count($files));
+        $this->afterAdding($added);
     }
 
     // --- Insertar vía link --------------------------------------------------------
@@ -193,11 +228,14 @@ class BannerManager extends Component
     {
         $this->externalInput = trim($this->externalInput);
 
-        if (! $this->hasRoom()) {
+        if (! $this->isVideo() && ! $this->hasRoom()) {
             $this->addError('externalInput', 'Alcanzaste el máximo de '.BannerSlider::MAX_SLIDES.' banners.');
 
             return;
         }
+
+        // El tipo de enlace lo define el tipo de banner, no lo que llegue desde el navegador.
+        $this->externalKind = $this->isVideo() ? 'youtube' : 'image';
 
         if ($this->externalKind === 'youtube') {
             $id = YouTube::extractId($this->externalInput);
@@ -221,7 +259,7 @@ class BannerManager extends Component
             $slide = ['type' => BannerSlide::TYPE_IMAGE_URL, 'url' => $this->externalInput];
         }
 
-        $this->slides[] = $this->newSlide($slide);
+        $this->slides = $this->isVideo() ? [$this->newSlide($slide)] : [...$this->slides, $this->newSlide($slide)];
         $this->afterAdding(1);
     }
 
@@ -231,7 +269,7 @@ class BannerManager extends Component
         $this->closePicker();
 
         if ($count > 0) {
-            $this->dispatch('notify', message: $count === 1 ? 'Banner agregado' : "{$count} banners agregados");
+            $this->dispatch('notify', message: $count === 1 ? ($this->isVideo() ? 'Video agregado' : 'Banner agregado') : "{$count} banners agregados");
         }
     }
 
@@ -300,8 +338,8 @@ class BannerManager extends Component
     {
         $index = $this->indexOf($uid);
 
-        // El texto y la descripción solo se editan con «Mostrar indicadores» activo.
-        if ($index === null || ! $this->showIndicators) {
+        // El texto y la descripción solo se editan en un slider con «Mostrar indicadores» activo.
+        if ($index === null || ! $this->canEditText()) {
             return;
         }
 
@@ -332,7 +370,7 @@ class BannerManager extends Component
 
         $index = $this->editingTextUid ? $this->indexOf($this->editingTextUid) : null;
 
-        if ($index !== null && $this->showIndicators) {
+        if ($index !== null && $this->canEditText()) {
             $this->slides[$index]['title'] = $this->textTitle === '' ? null : $this->textTitle;
             $this->slides[$index]['description'] = $this->textDescription === '' ? null : $this->textDescription;
             $this->dirty = true;
@@ -346,6 +384,7 @@ class BannerManager extends Component
     public function save(): void
     {
         $this->validate([
+            'displayType' => ['required', Rule::in(BannerSlider::types())],
             'screenPercentage' => ['required', 'integer', 'between:'.BannerSlider::MIN_PERCENTAGE.','.BannerSlider::MAX_PERCENTAGE],
             'showArrows' => ['boolean'],
             'showIndicators' => ['boolean'],
@@ -360,6 +399,7 @@ class BannerManager extends Component
         ], [
             'slides.*.title.max' => 'Uno de los textos supera los 120 caracteres.',
             'slides.*.description.max' => 'Una de las descripciones supera los 500 caracteres.',
+            'displayType.in' => 'Elige un tipo de banner válido.',
             'screenPercentage.required' => 'Ingresa el porcentaje de pantalla.',
             'screenPercentage.integer' => 'El porcentaje debe ser un número entero.',
             'screenPercentage.between' => 'El porcentaje debe estar entre '.BannerSlider::MIN_PERCENTAGE.' y '.BannerSlider::MAX_PERCENTAGE.'.',
@@ -368,12 +408,13 @@ class BannerManager extends Component
             'slides.*.link_url.regex' => 'Uno de los enlaces no es válido.',
         ]);
 
-        $this->ensureFilesAreMedia();
+        $this->ensureContentMatchesType();
 
         $slider = BannerSlider::main();
 
         DB::transaction(function () use ($slider): void {
             $slider->update([
+                'display_type' => $this->displayType,
                 'screen_percentage' => (int) $this->screenPercentage,
                 'show_arrows' => $this->showArrows,
                 'show_indicators' => $this->showIndicators,
@@ -407,22 +448,22 @@ class BannerManager extends Component
     }
 
     /**
-     * Los banners de tipo archivo solo pueden ser imágenes o videos.
+     * El contenido debe corresponder al tipo elegido: solo imágenes en el slider y un único video en el tipo video.
      */
-    protected function ensureFilesAreMedia(): void
+    protected function ensureContentMatchesType(): void
     {
-        $ids = collect($this->slides)->where('type', BannerSlide::TYPE_FILE)->pluck('media_file_id')->all();
-
-        if ($ids === []) {
-            return;
+        foreach ($this->slides as $slide) {
+            if (! $this->isCompatible($slide)) {
+                throw ValidationException::withMessages([
+                    'slides' => $this->isVideo()
+                        ? 'Un banner de video solo puede tener un video. Quita las imágenes.'
+                        : 'Un slider solo puede tener imágenes. Quita los videos o cambia el tipo a «Video».',
+                ]);
+            }
         }
 
-        $valid = MediaFile::whereIn('id', $ids)->whereIn('extension', $this->mediaExtensions())->count();
-
-        if ($valid !== count(array_unique($ids))) {
-            throw ValidationException::withMessages([
-                'slides' => 'Solo se pueden usar imágenes o videos como banner.',
-            ]);
+        if ($this->isVideo() && count($this->slides) > 1) {
+            throw ValidationException::withMessages(['slides' => 'Un banner de video solo puede tener un video.']);
         }
     }
 
@@ -467,6 +508,34 @@ class BannerManager extends Component
         ], $attributes);
     }
 
+    protected function isVideo(): bool
+    {
+        return $this->displayType === BannerSlider::TYPE_VIDEO;
+    }
+
+    protected function canEditText(): bool
+    {
+        return ! $this->isVideo() && $this->showIndicators;
+    }
+
+    /**
+     * Indica si un banner sirve para el tipo elegido: imágenes en el slider, video en el tipo video.
+     *
+     * @param  array<string, mixed>  $slide
+     */
+    protected function isCompatible(array $slide): bool
+    {
+        $wantsVideo = $this->isVideo();
+
+        return match ($slide['type'] ?? null) {
+            BannerSlide::TYPE_YOUTUBE => $wantsVideo,
+            BannerSlide::TYPE_IMAGE_URL => ! $wantsVideo,
+            BannerSlide::TYPE_FILE => is_numeric($slide['media_file_id'] ?? null)
+                && MediaFile::whereKey((int) $slide['media_file_id'])->whereIn('extension', $this->mediaExtensions())->exists(),
+            default => false,
+        };
+    }
+
     protected function hasRoom(): bool
     {
         return count($this->slides) < BannerSlider::MAX_SLIDES;
@@ -488,22 +557,18 @@ class BannerManager extends Component
      */
     protected function mediaExtensions(): array
     {
-        return array_merge(config('files.types.image'), config('files.types.video'));
+        return config('files.types.'.($this->isVideo() ? 'video' : 'image'));
     }
 
     /**
-     * Archivos del gestor que se pueden usar como banner, según los filtros del modal.
+     * Archivos del gestor que se pueden usar como banner según el tipo (imágenes o videos) y los filtros del modal.
      *
      * @return Builder<MediaFile>
      */
     protected function pickableFiles(): Builder
     {
-        $extensions = in_array($this->pickerType, ['image', 'video'], true)
-            ? config("files.types.{$this->pickerType}")
-            : $this->mediaExtensions();
-
         return MediaFile::query()
-            ->whereIn('extension', $extensions)
+            ->whereIn('extension', $this->mediaExtensions())
             ->when($this->pickerFolder !== '', fn ($query) => $query->where('media_folder_id', (int) $this->pickerFolder))
             ->when(trim($this->pickerSearch) !== '', fn ($query) => $query->nameLike($this->pickerSearch));
     }
@@ -523,6 +588,7 @@ class BannerManager extends Component
                 'link' => $slide['link_url'] ?? null,
                 'title' => $slide['title'] ?? null,
                 'description' => $slide['description'] ?? null,
+                'incompatible' => ! $this->isCompatible($slide),
                 'kind' => 'missing',
                 'src' => null,
                 'name' => 'Archivo no disponible',
@@ -552,6 +618,7 @@ class BannerManager extends Component
             'cards' => $this->cards(),
             'percentage' => max(BannerSlider::MIN_PERCENTAGE, min(BannerSlider::MAX_PERCENTAGE, (int) $this->screenPercentage)),
             'maxSlides' => BannerSlider::MAX_SLIDES,
+            'canEditText' => $this->canEditText(),
             'addedFileIds' => array_filter(array_column($this->slides, 'media_file_id')),
         ];
 

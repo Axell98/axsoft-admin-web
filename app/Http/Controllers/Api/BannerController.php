@@ -22,6 +22,7 @@ class BannerController extends Controller
             // Sin configuración aún: valores por defecto y ningún banner (sin escribir en la base de datos).
             $slider = new BannerSlider([
                 'name' => 'Principal',
+                'display_type' => BannerSlider::TYPE_SLIDER,
                 'screen_percentage' => 100,
                 'show_arrows' => true,
                 'show_indicators' => true,

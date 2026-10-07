@@ -20,7 +20,7 @@
                 class="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold transition hover:bg-slate-50 focus:ring-4 focus:ring-indigo-500/20 focus:outline-none"
             >
                 <x-icon name="search" class="size-4" />
-                Buscar imágenes
+                {{ $displayType === 'video' ? 'Buscar video' : 'Buscar imágenes' }}
             </button>
 
             <button
@@ -79,6 +79,34 @@
                     <p class="mt-2 text-xs text-slate-500">Porcentaje de la altura de la pantalla que ocupa el banner.</p>
                 </div>
 
+                <div class="py-4">
+                    <label for="displayType" class="mb-1.5 block text-sm font-medium">Tipo de banner</label>
+                    <select
+                        id="displayType"
+                        wire:model.live="displayType"
+                        @class([
+                            'w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm shadow-xs outline-none transition focus:ring-4',
+                            'border-slate-300 focus:border-indigo-500 focus:ring-indigo-500/15' => ! $errors->has('displayType'),
+                            'border-red-400 focus:border-red-500 focus:ring-red-500/15' => $errors->has('displayType'),
+                        ])
+                    >
+                        <option value="slider">Slider de imágenes</option>
+                        <option value="video">Video</option>
+                    </select>
+                    @error('displayType')
+                        <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+
+                    <p class="mt-2 text-xs text-slate-500">
+                        @if ($displayType === 'video')
+                            Un solo video, de tus archivos o de YouTube.
+                        @else
+                            Varias imágenes que se van pasando en la portada (hasta {{ $maxSlides }}).
+                        @endif
+                    </p>
+                </div>
+
+                @if ($displayType === 'slider')
                 <div>
                     <x-toggle label="Mostrar indicadores" wire:model.live="showIndicators" />
                     <p class="-mt-1 pb-3.5 text-xs text-slate-500">
@@ -90,6 +118,7 @@
                     </p>
                 </div>
                 <x-toggle label="Mostrar flechas" wire:model.live="showArrows" />
+                @endif
             </div>
         </aside>
 
@@ -107,16 +136,22 @@
                     <span class="flex size-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
                         <x-icon name="image" class="size-7" />
                     </span>
-                    <h4 class="mt-4 font-semibold">Aún no hay banners</h4>
-                    <p class="mt-1 max-w-sm text-sm text-slate-500">Elige imágenes o videos de tus archivos, o inserta una imagen por link o un video de YouTube.</p>
+                    <h4 class="mt-4 font-semibold">{{ $displayType === 'video' ? 'Aún no hay un video' : 'Aún no hay banners' }}</h4>
+                    <p class="mt-1 max-w-sm text-sm text-slate-500">
+                        @if ($displayType === 'video')
+                            Elige un video de tus archivos o inserta uno de YouTube.
+                        @else
+                            Elige imágenes de tus archivos o inserta una imagen por link.
+                        @endif
+                    </p>
                     <button type="button" wire:click="openPicker" class="mt-5 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500">
-                        Buscar imágenes
+                        {{ $displayType === 'video' ? 'Buscar video' : 'Buscar imágenes' }}
                     </button>
                 </div>
             @else
                 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     @foreach ($cards as $index => $card)
-                        <div wire:key="slide-{{ $card['uid'] }}" class="group relative aspect-video overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                        <div wire:key="slide-{{ $card['uid'] }}" @class(['group relative aspect-video overflow-hidden rounded-xl border bg-slate-100', 'border-slate-200' => ! $card['incompatible'], 'border-red-400 ring-4 ring-red-500/20' => $card['incompatible']])>
                             @if ($card['kind'] === 'video')
                                 <video src="{{ $card['src'] }}#t=0.5" preload="metadata" muted playsinline class="size-full object-cover"></video>
                             @elseif ($card['src'])
@@ -137,9 +172,15 @@
                                         {{ $card['kind'] === 'youtube' ? 'YouTube' : 'Video' }}
                                     </span>
                                 @endif
+                                @if ($card['incompatible'])
+                                    <span class="rounded-full bg-red-600 px-2 py-1 text-xs font-medium text-white">
+                                        {{ $displayType === 'video' ? 'No es un video' : 'Solo imágenes' }}: quítalo
+                                    </span>
+                                @endif
                             </div>
 
                             {{-- Orden --}}
+                            @if ($displayType === 'slider')
                             <div class="absolute top-2 right-2 flex items-center rounded-full bg-slate-900/70 text-white">
                                 <button type="button" wire:click="moveSlide('{{ $card['uid'] }}', 'left')" @disabled($index === 0) title="Mover antes" aria-label="Mover antes" class="rounded-full p-1.5 transition hover:bg-white/20 disabled:opacity-30 disabled:hover:bg-transparent">
                                     <x-icon name="arrow-left" class="size-4" />
@@ -148,9 +189,10 @@
                                     <x-icon name="arrow-right" class="size-4" />
                                 </button>
                             </div>
+                            @endif
 
-                            {{-- Texto y descripción (solo con indicadores activos) --}}
-                            @if ($showIndicators && ($card['title'] || $card['description']))
+                            {{-- Texto y descripción (solo en el slider con indicadores activos) --}}
+                            @if ($canEditText && ($card['title'] || $card['description']))
                                 <div class="pointer-events-none absolute inset-x-0 bottom-11 px-3 text-white">
                                     @if ($card['title'])
                                         <p class="truncate text-sm font-semibold drop-shadow">{{ $card['title'] }}</p>
@@ -163,7 +205,7 @@
 
                             {{-- Acciones --}}
                             <div class="absolute inset-x-0 bottom-0 flex items-center justify-end gap-0.5 bg-linear-to-t from-slate-950/85 to-transparent px-2 pt-8 pb-2 text-sm text-white">
-                                @if ($showIndicators)
+                                @if ($canEditText)
                                     <button type="button" wire:click="openTextModal('{{ $card['uid'] }}')" title="Texto y descripción" class="flex items-center gap-1.5 rounded-md px-2 py-1.5 font-medium transition hover:bg-white/15">
                                         <x-icon name="text" class="size-4" />
                                         Texto
@@ -188,19 +230,25 @@
                     @endforeach
                 </div>
 
-                <p class="mt-4 text-xs text-slate-500">{{ count($cards) }} de {{ $maxSlides }} banners. El orden de esta lista es el orden en que se mostrarán.</p>
+                <p class="mt-4 text-xs text-slate-500">
+                    @if ($displayType === 'video')
+                        Este video es el banner de tu portada. Para cambiarlo, busca otro y reemplazará al actual.
+                    @else
+                        {{ count($cards) }} de {{ $maxSlides }} banners. El orden de esta lista es el orden en que se mostrarán.
+                    @endif
+                </p>
             @endif
         </section>
     </div>
 
     {{-- Modal: seleccionar imagen o video --}}
     @if ($showPicker)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Seleccionar imagen" x-data x-on:keydown.escape.window="$wire.closePicker()">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="{{ $displayType === 'video' ? 'Seleccionar video' : 'Seleccionar imagen' }}" x-data x-on:keydown.escape.window="$wire.closePicker()">
             <div wire:click="closePicker" class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"></div>
 
             <div class="relative flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
                 <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-                    <h3 class="text-lg font-semibold tracking-tight">Seleccionar imagen o video</h3>
+                    <h3 class="text-lg font-semibold tracking-tight">{{ $displayType === 'video' ? 'Seleccionar un video' : 'Seleccionar imágenes' }}</h3>
                     <button type="button" wire:click="closePicker" class="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100" aria-label="Cerrar">
                         <x-icon name="close" />
                     </button>
@@ -218,12 +266,6 @@
                         >
                     </div>
 
-                    <select wire:model.live="pickerType" aria-label="Tipo" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-xs outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15">
-                        <option value="all">Imágenes y videos</option>
-                        <option value="image">Solo imágenes</option>
-                        <option value="video">Solo videos</option>
-                    </select>
-
                     <select wire:model.live="pickerFolder" aria-label="Carpeta" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-xs outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15">
                         <option value="">Todas las carpetas</option>
                         @foreach ($folders as $folder)
@@ -237,9 +279,9 @@
                     @if ($pickerFiles->isEmpty())
                         <div class="flex flex-col items-center py-12 text-center">
                             <x-icon name="image" class="size-10 text-slate-300" />
-                            <p class="mt-3 text-sm font-medium">No hay imágenes ni videos para mostrar</p>
+                            <p class="mt-3 text-sm font-medium">{{ $displayType === 'video' ? 'No hay videos para mostrar' : 'No hay imágenes para mostrar' }}</p>
                             <p class="mt-1 text-sm text-slate-500">
-                                Cárgalos en <a href="{{ route('admin.files') }}" wire:navigate class="text-indigo-600 hover:underline">Archivos</a> o inserta uno por link.
+                                Cárgalos en <a href="{{ route('admin.files') }}" wire:navigate class="text-indigo-600 hover:underline">Archivos</a> o {{ $displayType === 'video' ? 'inserta uno de YouTube' : 'inserta uno por link' }}.
                             </p>
                         </div>
                     @else
@@ -289,14 +331,7 @@
                 {{-- Insertar vía link --}}
                 @if ($showExternalForm)
                     <form wire:submit="addExternal" class="space-y-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
-                        <div class="inline-flex rounded-xl border border-slate-300 bg-white p-1 text-sm" role="radiogroup">
-                            <label @class(['cursor-pointer rounded-lg px-3 py-1.5 font-medium transition', 'bg-indigo-600 text-white' => $externalKind === 'image', 'text-slate-600' => $externalKind !== 'image'])>
-                                <input type="radio" wire:model.live="externalKind" value="image" class="sr-only"> Imagen por link
-                            </label>
-                            <label @class(['cursor-pointer rounded-lg px-3 py-1.5 font-medium transition', 'bg-indigo-600 text-white' => $externalKind === 'youtube', 'text-slate-600' => $externalKind !== 'youtube'])>
-                                <input type="radio" wire:model.live="externalKind" value="youtube" class="sr-only"> Video de YouTube
-                            </label>
-                        </div>
+                        <p class="text-sm font-medium">{{ $displayType === 'video' ? 'Video de YouTube' : 'Imagen por link' }}</p>
 
                         <div class="flex flex-wrap items-start gap-3">
                             <div class="min-w-64 flex-1">
@@ -326,7 +361,7 @@
                 <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-6 py-4">
                     <button type="button" wire:click="$toggle('showExternalForm')" class="flex items-center gap-2 text-sm font-medium text-indigo-600 transition hover:underline">
                         <x-icon name="link" class="size-4" />
-                        Insertar imagen o video vía link
+                        {{ $displayType === 'video' ? 'Insertar video de YouTube' : 'Insertar imagen vía link' }}
                     </button>
 
                     <div class="flex items-center gap-4">
@@ -337,7 +372,7 @@
                             @disabled(count($pickerSelected) === 0)
                             class="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                            Agregar{{ count($pickerSelected) > 0 ? ' ('.count($pickerSelected).')' : '' }}
+                            {{ $displayType === 'video' ? 'Usar video' : 'Agregar' }}{{ $displayType === 'slider' && count($pickerSelected) > 0 ? ' ('.count($pickerSelected).')' : '' }}
                         </button>
                     </div>
                 </div>
@@ -346,7 +381,7 @@
     @endif
 
     {{-- Modal: texto y descripción del banner --}}
-    @if ($editingTextUid && $editingTextCard && $showIndicators)
+    @if ($editingTextUid && $editingTextCard && $canEditText)
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" x-data x-on:keydown.escape.window="$wire.closeTextModal()">
             <div wire:click="closeTextModal" class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"></div>
 

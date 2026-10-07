@@ -20,18 +20,23 @@ class BannerSliderResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $isVideo = $this->isVideo();
+
         return [
+            // slider (varias imágenes) | video (un solo video)
+            'type' => $this->display_type,
             'screen_percentage' => $this->screen_percentage,
-            'show_arrows' => $this->show_arrows,
-            'show_indicators' => $this->show_indicators,
+            // Un banner de video no lleva flechas ni indicadores.
+            'show_arrows' => ! $isVideo && $this->show_arrows,
+            'show_indicators' => ! $isVideo && $this->show_indicators,
             'slides' => $this->slides->map(fn (BannerSlide $slide) => [
                 'type' => $slide->kind(),
                 'url' => $slide->sourceUrl(),
                 'embed_url' => $slide->embedUrl(),
                 'thumbnail_url' => $slide->youtube_id ? YouTube::thumbnailUrl($slide->youtube_id) : null,
-                // El texto y la descripción solo se muestran con los indicadores activos.
-                'title' => $this->show_indicators ? $slide->title : null,
-                'description' => $this->show_indicators ? $slide->description : null,
+                // El texto y la descripción solo se muestran en un slider con los indicadores activos.
+                'title' => ! $isVideo && $this->show_indicators ? $slide->title : null,
+                'description' => ! $isVideo && $this->show_indicators ? $slide->description : null,
                 'link_url' => $slide->link_url,
             ])->values(),
         ];

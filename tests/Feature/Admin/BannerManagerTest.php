@@ -100,17 +100,17 @@ test('los cambios no se guardan hasta pulsar guardar', function () {
 
 // --- Agregar desde archivos -------------------------------------------------------
 
-test('se pueden agregar imagenes y videos del gestor de archivos', function () {
+test('se pueden agregar imagenes del gestor de archivos', function () {
     $image = mediaFile('fachada.jpg');
-    $video = mediaFile('recorrido.mp4');
+    $other = mediaFile('interior.png');
 
     Livewire::test(BannerManager::class)
         ->call('openPicker')
         ->assertSet('showPicker', true)
         ->assertSee('fachada.jpg')
-        ->assertSee('recorrido.mp4')
+        ->assertSee('interior.png')
         ->call('togglePick', $image->id)
-        ->call('togglePick', $video->id)
+        ->call('togglePick', $other->id)
         ->call('addPicked')
         ->assertSet('showPicker', false)
         ->assertSet('dirty', true)
@@ -122,36 +122,41 @@ test('se pueden agregar imagenes y videos del gestor de archivos', function () {
     expect($slides)->toHaveCount(2)
         ->and($slides[0]->media_file_id)->toBe($image->id)
         ->and($slides[0]->kind())->toBe('image')
-        ->and($slides[1]->media_file_id)->toBe($video->id)
-        ->and($slides[1]->kind())->toBe('video')
+        ->and($slides[1]->media_file_id)->toBe($other->id)
+        ->and($slides[1]->kind())->toBe('image')
         ->and($slides->pluck('position')->all())->toBe([0, 1]);
 });
 
-test('el selector solo muestra imagenes y videos', function () {
+test('el selector solo muestra imagenes en el slider y videos en el tipo video', function () {
     mediaFile('plano.pdf');
     mediaFile('hoja.xlsx');
     mediaFile('foto.png');
-
-    Livewire::test(BannerManager::class)
-        ->call('openPicker')
-        ->assertSee('foto.png')
-        ->assertDontSee('plano.pdf')
-        ->assertDontSee('hoja.xlsx');
-});
-
-test('el selector filtra por tipo y por nombre', function () {
-    mediaFile('fachada.jpg');
     mediaFile('recorrido.mp4');
 
+    $component = Livewire::test(BannerManager::class)
+        ->call('openPicker')
+        ->assertSee('foto.png')
+        ->assertDontSee('recorrido.mp4')
+        ->assertDontSee('plano.pdf')
+        ->assertDontSee('hoja.xlsx')
+        ->set('displayType', 'video')
+        ->call('openPicker')
+        ->assertSee('recorrido.mp4')
+        ->assertDontSee('foto.png')
+        ->assertDontSee('plano.pdf');
+
+    expect($component->get('externalKind'))->toBe('youtube');
+});
+
+test('el selector filtra por nombre', function () {
+    mediaFile('fachada.jpg');
+    mediaFile('interior.jpg');
+
     Livewire::test(BannerManager::class)
         ->call('openPicker')
-        ->set('pickerType', 'video')
-        ->assertSee('recorrido.mp4')
-        ->assertDontSee('fachada.jpg')
-        ->set('pickerType', 'all')
         ->set('pickerSearch', 'fach')
         ->assertSee('fachada.jpg')
-        ->assertDontSee('recorrido.mp4');
+        ->assertDontSee('interior.jpg');
 });
 
 test('el selector pagina con cargar mas', function () {
@@ -223,8 +228,8 @@ test('rechaza links de imagen invalidos', function (string $value) {
 
 test('se puede agregar un video de YouTube por url o por iframe', function (string $input) {
     Livewire::test(BannerManager::class)
+        ->set('displayType', 'video')
         ->call('openPicker')
-        ->set('externalKind', 'youtube')
         ->set('externalInput', $input)
         ->call('addExternal')
         ->assertHasNoErrors()
@@ -244,8 +249,8 @@ test('se puede agregar un video de YouTube por url o por iframe', function (stri
 
 test('rechaza enlaces de YouTube invalidos y no guarda html del usuario', function () {
     Livewire::test(BannerManager::class)
+        ->set('displayType', 'video')
         ->call('openPicker')
-        ->set('externalKind', 'youtube')
         ->set('externalInput', '<iframe src="https://evil.com/x"></iframe><script>alert(1)</script>')
         ->call('addExternal')
         ->assertHasErrors('externalInput')
@@ -566,4 +571,186 @@ test('un texto demasiado largo manipulado en el estado es rechazado al guardar',
         ->assertHasErrors('slides.0.title');
 
     expect(BannerSlide::count())->toBe(0);
+});
+
+// --- Tipo de banner: slider o video -----------------------------------------------------
+
+/**
+ * @return array<string, mixed>
+ */
+function bannerSlide(array $attributes = []): array
+{
+    return array_merge(['uid' => Str::random(8), 'id' => null, 'type' => 'file', 'media_file_id' => null, 'url' => null, 'youtube_id' => null, 'title' => null, 'description' => null, 'link_url' => null], $attributes);
+}
+
+test('por defecto es un slider de imagenes y se guarda el tipo', function () {
+    $component = Livewire::test(BannerManager::class)->assertSet('displayType', 'slider');
+
+    $component->set('displayType', 'video')->call('save')->assertHasNoErrors();
+
+    expect(BannerSlider::first()->display_type)->toBe('video');
+
+    Livewire::test(BannerManager::class)->assertSet('displayType', 'video');
+});
+
+test('un tipo invalido vuelve a slider', function () {
+    Livewire::test(BannerManager::class)->set('displayType', 'hackeado')->assertSet('displayType', 'slider');
+});
+
+test('la pagina cambia sus textos segun el tipo', function () {
+    Livewire::test(BannerManager::class)
+        ->assertSee('Slider de imágenes')
+        ->assertSee('Mostrar flechas')
+        ->assertSee('Mostrar indicadores')
+        ->assertSee('Buscar imágenes')
+        ->set('displayType', 'video')
+        ->assertSee('Buscar video')
+        ->assertSee('Aún no hay un video')
+        ->assertDontSee('Mostrar flechas')
+        ->assertDontSee('Mostrar indicadores');
+});
+
+test('en el tipo video se elige un solo video del gestor y el nuevo reemplaza al anterior', function () {
+    $first = mediaFile('uno.mp4');
+    $second = mediaFile('dos.webm');
+
+    Livewire::test(BannerManager::class)
+        ->set('displayType', 'video')
+        ->call('openPicker')
+        ->call('togglePick', $first->id)
+        ->call('togglePick', $second->id)
+        ->assertSet('pickerSelected', [$second->id])
+        ->call('addPicked')
+        ->assertCount('slides', 1)
+        ->call('openPicker')
+        ->call('togglePick', $first->id)
+        ->call('addPicked')
+        ->assertCount('slides', 1)
+        ->assertSet('slides.0.media_file_id', $first->id)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(BannerSlide::count())->toBe(1)->and(BannerSlide::first()->media_file_id)->toBe($first->id);
+});
+
+test('en el tipo video un video de YouTube reemplaza al archivo', function () {
+    $video = mediaFile('uno.mp4');
+
+    Livewire::test(BannerManager::class)
+        ->set('displayType', 'video')
+        ->call('openPicker')
+        ->call('togglePick', $video->id)
+        ->call('addPicked')
+        ->call('openPicker')
+        ->set('externalInput', 'https://youtu.be/dQw4w9WgXcQ')
+        ->call('addExternal')
+        ->assertHasNoErrors()
+        ->assertCount('slides', 1)
+        ->assertSet('slides.0.type', 'youtube');
+});
+
+test('el slider no acepta videos ni youtube y el tipo video no acepta imagenes ni links de imagen', function () {
+    $video = mediaFile('uno.mp4');
+    $image = mediaFile('foto.jpg');
+
+    Livewire::test(BannerManager::class)
+        ->call('openPicker')
+        ->call('togglePick', $video->id)
+        ->call('addPicked')
+        ->assertSet('slides', [])
+        ->set('externalKind', 'youtube')
+        ->set('externalInput', 'https://youtu.be/dQw4w9WgXcQ')
+        ->call('addExternal')
+        ->assertSet('externalKind', 'image')
+        ->assertSet('slides.0.type', 'image_url');
+
+    Livewire::test(BannerManager::class)
+        ->set('displayType', 'video')
+        ->call('openPicker')
+        ->call('togglePick', $image->id)
+        ->call('addPicked')
+        ->assertSet('slides', [])
+        ->set('externalKind', 'image')
+        ->set('externalInput', 'https://sitio.com/a.jpg')
+        ->call('addExternal')
+        ->assertHasErrors('externalInput')
+        ->assertSet('slides', []);
+});
+
+test('al pasar a video se quitan las imagenes y al pasar a slider se quita el video', function () {
+    $image = mediaFile('foto.jpg');
+    $video = mediaFile('uno.mp4');
+
+    Livewire::test(BannerManager::class)
+        ->call('openPicker')
+        ->call('togglePick', $image->id)
+        ->call('addPicked')
+        ->assertCount('slides', 1)
+        ->set('displayType', 'video')
+        ->assertCount('slides', 0)
+        ->assertSet('dirty', true)
+        ->assertDispatched('notify')
+        ->call('openPicker')
+        ->call('togglePick', $video->id)
+        ->call('addPicked')
+        ->assertCount('slides', 1)
+        ->set('displayType', 'slider')
+        ->assertCount('slides', 0);
+});
+
+test('un slider con contenido de video guardado se muestra marcado y no deja guardar', function () {
+    $image = mediaFile('foto.jpg');
+    $slider = BannerSlider::create(['name' => 'Principal', 'screen_percentage' => 100, 'show_arrows' => true, 'show_indicators' => true]);
+    $slider->slides()->create(['type' => 'file', 'media_file_id' => $image->id, 'position' => 0]);
+    $slider->slides()->create(['type' => 'youtube', 'youtube_id' => 'dQw4w9WgXcQ', 'position' => 1]);
+
+    Livewire::test(BannerManager::class)
+        ->assertCount('slides', 2)
+        ->assertSee('Solo imágenes')
+        ->call('save')
+        ->assertHasErrors('slides')
+        ->assertSee('Un slider solo puede tener imágenes');
+
+    expect(BannerSlide::count())->toBe(2);
+});
+
+test('el tipo video no se puede manipular para guardar varios videos o imagenes', function () {
+    $a = mediaFile('a.mp4');
+    $b = mediaFile('b.mp4');
+    $image = mediaFile('foto.jpg');
+
+    Livewire::test(BannerManager::class)
+        ->set('displayType', 'video')
+        ->set('slides', [bannerSlide(['media_file_id' => $a->id]), bannerSlide(['media_file_id' => $b->id])])
+        ->call('save')
+        ->assertHasErrors('slides');
+
+    Livewire::test(BannerManager::class)
+        ->set('displayType', 'video')
+        ->set('slides', [bannerSlide(['media_file_id' => $image->id])])
+        ->call('save')
+        ->assertHasErrors('slides');
+
+    Livewire::test(BannerManager::class)
+        ->set('displayType', 'slider')
+        ->set('slides', [bannerSlide(['type' => 'youtube', 'youtube_id' => 'dQw4w9WgXcQ'])])
+        ->call('save')
+        ->assertHasErrors('slides');
+
+    expect(BannerSlide::count())->toBe(0);
+});
+
+test('el tipo video no permite editar el texto de un banner', function () {
+    $video = mediaFile('a.mp4');
+
+    $component = Livewire::test(BannerManager::class)
+        ->set('displayType', 'video')
+        ->set('showIndicators', true)
+        ->call('openPicker')
+        ->call('togglePick', $video->id)
+        ->call('addPicked');
+
+    $uid = $component->get('slides.0.uid');
+
+    $component->call('openTextModal', $uid)->assertSet('editingTextUid', null);
 });

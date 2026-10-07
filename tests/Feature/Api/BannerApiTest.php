@@ -92,3 +92,28 @@ test('oculta texto y descripcion cuando los indicadores estan desactivados', fun
         ->assertJsonPath('data.slides.0.title', null)
         ->assertJsonPath('data.slides.0.description', null);
 });
+
+test('indica el tipo de banner y por defecto es slider', function () {
+    $this->getJson('/api/v1/banners')->assertJsonPath('data.type', 'slider');
+
+    BannerSlider::create(['name' => 'Principal', 'display_type' => 'slider', 'screen_percentage' => 100, 'show_arrows' => true, 'show_indicators' => true]);
+
+    $this->getJson('/api/v1/banners')->assertJsonPath('data.type', 'slider')->assertJsonPath('data.show_arrows', true);
+});
+
+test('un banner de video no lleva flechas, indicadores ni textos', function () {
+    $slider = BannerSlider::create(['name' => 'Principal', 'display_type' => 'video', 'screen_percentage' => 80, 'show_arrows' => true, 'show_indicators' => true]);
+    $slider->slides()->create(['type' => 'file', 'media_file_id' => apiMedia('portada.mp4')->id, 'position' => 0, 'title' => 'Titulo', 'description' => 'Texto', 'link_url' => '/contacto']);
+
+    $this->getJson('/api/v1/banners')
+        ->assertOk()
+        ->assertJsonPath('data.type', 'video')
+        ->assertJsonPath('data.screen_percentage', 80)
+        ->assertJsonPath('data.show_arrows', false)
+        ->assertJsonPath('data.show_indicators', false)
+        ->assertJsonCount(1, 'data.slides')
+        ->assertJsonPath('data.slides.0.type', 'video')
+        ->assertJsonPath('data.slides.0.title', null)
+        ->assertJsonPath('data.slides.0.description', null)
+        ->assertJsonPath('data.slides.0.link_url', '/contacto');
+});

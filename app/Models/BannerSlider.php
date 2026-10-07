@@ -13,15 +13,20 @@ use Illuminate\Support\Carbon;
  *
  * @property int $id
  * @property string $name
+ * @property string $display_type slider (imágenes) | video (un solo video).
  * @property int $screen_percentage Porcentaje de la altura de la pantalla que ocupa el banner (10-100).
  * @property bool $show_arrows
  * @property bool $show_indicators
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'screen_percentage', 'show_arrows', 'show_indicators'])]
+#[Fillable(['name', 'display_type', 'screen_percentage', 'show_arrows', 'show_indicators'])]
 class BannerSlider extends Model
 {
+    public const TYPE_SLIDER = 'slider';
+
+    public const TYPE_VIDEO = 'video';
+
     public const MIN_PERCENTAGE = 10;
 
     public const MAX_PERCENTAGE = 100;
@@ -35,10 +40,24 @@ class BannerSlider extends Model
     {
         return static::query()->first() ?? static::create([
             'name' => 'Principal',
+            'display_type' => self::TYPE_SLIDER,
             'screen_percentage' => self::MAX_PERCENTAGE,
             'show_arrows' => true,
             'show_indicators' => true,
         ]);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function types(): array
+    {
+        return [self::TYPE_SLIDER, self::TYPE_VIDEO];
+    }
+
+    public function isVideo(): bool
+    {
+        return $this->display_type === self::TYPE_VIDEO;
     }
 
     /**
