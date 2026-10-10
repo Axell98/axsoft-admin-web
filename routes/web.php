@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Livewire\Admin\BannerManager;
 use App\Livewire\Admin\CategoryManager;
 use App\Livewire\Admin\CompanyForm;
+use App\Livewire\Admin\CoverManager;
 use App\Livewire\Admin\FileManager;
 use App\Livewire\Admin\PopupManager;
 use App\Livewire\Admin\ProjectForm;
@@ -27,6 +28,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/datos-cliente', CompanyForm::class)->name('client');
         Route::get('/banners', BannerManager::class)->name('banners');
+        Route::get('/portadas', CoverManager::class)->name('covers');
         Route::get('/popup', PopupManager::class)->name('popup');
         Route::get('/proyectos', ProjectIndex::class)->name('projects');
         Route::get('/proyectos/crear', ProjectForm::class)->name('projects.create');

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\BannerController;
 use App\Http\Controllers\Api\CompanyController;
+use App\Http\Controllers\Api\CoverController;
 use App\Http\Controllers\Api\PopupController;
 use App\Http\Controllers\Api\ProjectCategoryController;
 use App\Http\Controllers\Api\ProjectController;
@@ -21,6 +22,8 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->middleware('throttle:api')->group(function () {
     Route::get('/company', [CompanyController::class, 'show'])->name('api.company');
     Route::get('/banners', [BannerController::class, 'show'])->name('api.banners');
+    Route::get('/covers', [CoverController::class, 'index'])->name('api.covers');
+    Route::get('/covers/{page}', [CoverController::class, 'show'])->name('api.covers.show');
     Route::get('/project-categories', [ProjectCategoryController::class, 'index'])->name('api.project-categories');
     Route::get('/popup', [PopupController::class, 'show'])->name('api.popup');
     Route::get('/testimonials', [TestimonialController::class, 'index'])->name('api.testimonials');

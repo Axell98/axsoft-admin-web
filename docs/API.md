@@ -4,7 +4,7 @@ Documentación de la API que consume el sitio web del cliente para mostrar la in
 
 - [Información general](#información-general)
 - [Resumen de endpoints](#resumen-de-endpoints)
-- [Empresa](#1-empresa) · [Banner](#2-banner) · [Pop-up](#3-pop-up) · [Proyectos](#4-proyectos) · [Categorías de proyectos](#5-categorías-de-proyectos) · [Testimonios](#6-testimonios)
+- [Empresa](#1-empresa) · [Banner](#2-banner) · [Pop-up](#3-pop-up) · [Proyectos](#4-proyectos) · [Categorías de proyectos](#5-categorías-de-proyectos) · [Testimonios](#6-testimonios) · [Portadas](#7-portadas)
 - [Errores](#errores)
 - [Ejemplos de uso](#ejemplos-de-uso)
 
@@ -44,6 +44,8 @@ Documentación de la API que consume el sitio web del cliente para mostrar la in
 | GET | `/projects/{slug}` | Detalle de un proyecto |
 | GET | `/project-categories` | Categorías que tienen proyectos visibles |
 | GET | `/testimonials` | Testimonios visibles |
+| GET | `/covers` | Portadas activas de las páginas internas |
+| GET | `/covers/{page}` | Portada de una página interna, o `null` si no hay ninguna que mostrar |
 
 ---
 
@@ -535,6 +537,73 @@ Si no hay testimonios visibles, `data` es una lista vacía (`[]`).
 
 ---
 
+## 7. Portadas
+
+Imagen de cabecera de las páginas internas del sitio (Nosotros, Servicios, Contacto...). Cada página se identifica con una clave (`page`), definida en `config/covers.php` del panel. Solo se publican las portadas **activas** y que tienen imagen.
+
+### 7.1 Listado
+
+`GET /covers`
+
+Todas las portadas activas, en el orden en que están configuradas las páginas. Sirve para cargarlas todas de una vez.
+
+#### Respuesta `200`
+
+```json
+{
+  "data": [
+    {
+      "page": "nosotros",
+      "title": "Conoce nuestro estudio",
+      "image_url": "https://admin.tuempresa.com/storage/files/2026/10/portada-nosotros.jpg"
+    },
+    {
+      "page": "contacto",
+      "title": null,
+      "image_url": "https://sitio.com/portada-contacto.jpg"
+    }
+  ]
+}
+```
+
+Si no hay portadas activas, `data` es una lista vacía (`[]`).
+
+### 7.2 Portada de una página
+
+`GET /covers/{page}`
+
+Portada de una página interna, buscada por su clave. Cuando **no hay nada que mostrar** (la página no tiene portada, está inactiva, se quedó sin imagen o la clave no existe) responde `200` con `data: null`: en ese caso el sitio debe usar su portada por defecto.
+
+Ejemplo: `GET /covers/nosotros`
+
+#### Respuesta `200`
+
+```json
+{
+  "data": {
+    "page": "nosotros",
+    "title": "Conoce nuestro estudio",
+    "image_url": "https://admin.tuempresa.com/storage/files/2026/10/portada-nosotros.jpg"
+  }
+}
+```
+
+#### Respuesta `200`: sin portada
+
+```json
+{
+  "data": null
+}
+```
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `page` | string | Clave de la página interna (`nosotros`, `servicios`, `proyectos`, `contacto`...) |
+| `title` | string \| null | Título que se muestra sobre la portada. Texto plano |
+| `image_url` | string | URL absoluta de la imagen. Tamaño recomendado: 1920x400 píxeles |
+
+---
+
 ## Errores
 
 Todos los errores son JSON con un campo `message`. (En un servidor de desarrollo con `APP_DEBUG=true` la respuesta trae además datos técnicos como `exception` y `trace`; en producción solo llega `message`.)
@@ -633,4 +702,16 @@ testimonials.forEach((item) => {
     quote.textContent = item.content; // texto plano: no usar innerHTML
     quote.style.whiteSpace = 'pre-line';
 });
+```
+
+### Portada de una página interna
+
+```js
+const cover = await api('/covers/nosotros');
+
+if (cover) {
+    hero.style.backgroundImage = `url("${cover.image_url}")`;
+    heroTitle.textContent = cover.title ?? ''; // texto plano: no usar innerHTML
+}
+// Si cover es null, se deja la portada por defecto del sitio.
 ```

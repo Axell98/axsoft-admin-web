@@ -27,6 +27,11 @@ return [
         'route' => 'admin.banners',
     ],
     [
+        'label' => 'Portadas',
+        'icon' => 'presentation',
+        'route' => 'admin.covers',
+    ],
+    [
         'label' => 'Pop-up',
         'icon' => 'popup',
         'route' => 'admin.popup',
