@@ -107,6 +107,15 @@ class CoverManager extends Component
         $this->resetErrorBag('imageType');
     }
 
+    /**
+     * Quita la imagen del formulario. Como el resto de cambios, se aplica al guardar.
+     */
+    public function removeImage(): void
+    {
+        $this->reset('imageType', 'mediaFileId', 'externalUrl');
+        $this->resetErrorBag('imageType');
+    }
+
     // --- Guardar ------------------------------------------------------------------
 
     public function save(): void
@@ -137,12 +146,13 @@ class CoverManager extends Component
     }
 
     /**
-     * La portada necesita una imagen: un archivo de imagen existente o un link http(s).
+     * La imagen, si hay, debe ser un archivo de imagen existente o un link http(s).
+     * Sin imagen la página queda sin portada y el sitio usa la suya por defecto.
      */
     protected function ensureImageIsValid(): void
     {
         if ($this->imageType === null) {
-            throw ValidationException::withMessages(['imageType' => 'Elige la imagen de la portada.']);
+            return;
         }
 
         $valid = match ($this->imageType) {
@@ -152,7 +162,7 @@ class CoverManager extends Component
         };
 
         if (! $valid) {
-            throw ValidationException::withMessages(['imageType' => 'La imagen elegida no es válida o ya no existe. Vuelve a elegirla.']);
+            throw ValidationException::withMessages(['imageType' => 'La imagen elegida no es válida o ya no existe. Elige otra o quítala.']);
         }
     }
 

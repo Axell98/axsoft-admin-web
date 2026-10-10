@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\FileDownloadController;
+use App\Http\Controllers\Admin\FileThumbnailController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\DashboardController;
 use App\Livewire\Admin\BannerManager;
@@ -37,5 +38,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/testimonios', TestimonialManager::class)->name('testimonials');
         Route::get('/archivos', FileManager::class)->name('files');
         Route::get('/archivos/{mediaFile}/descargar', FileDownloadController::class)->name('files.download');
+        Route::get('/archivos/{mediaFile}/miniatura', FileThumbnailController::class)->name('files.thumbnail');
     });
 });

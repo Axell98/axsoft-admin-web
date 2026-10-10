@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\MediaFile;
 use App\Models\MediaFolder;
+use App\Support\Thumbnail;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -236,7 +237,7 @@ class FileManager extends Component
                 MediaFile::DISK,
             );
 
-            MediaFile::create([
+            $media = MediaFile::create([
                 'media_folder_id' => $folderId,
                 'name' => $name,
                 'path' => $path,
@@ -244,6 +245,9 @@ class FileManager extends Component
                 'mime_type' => $file->getMimeType(),
                 'size' => $file->getSize(),
             ]);
+
+            // La miniatura es opcional: si no se puede crear ahora, se crea al mostrar el archivo.
+            Thumbnail::generate($media);
 
             return ['ok' => true];
         } finally {

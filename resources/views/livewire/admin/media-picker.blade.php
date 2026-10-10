@@ -80,7 +80,8 @@
                                         <video src="{{ $file->url() }}#t=0.5" preload="metadata" muted playsinline class="size-full object-cover"></video>
                                         <span class="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-slate-900/70 px-2 py-1 text-xs font-medium text-white"><x-icon name="play" class="size-3" /> Video</span>
                                     @else
-                                        <img src="{{ $file->url() }}" alt="{{ $file->name }}" loading="lazy" class="size-full object-cover">
+                                        {{-- Miniatura; si falla, se muestra el archivo original. --}}
+                                        <img src="{{ $file->thumbnailUrl() }}" data-original="{{ $file->url() }}" onerror="this.onerror=null;this.src=this.dataset.original" alt="{{ $file->name }}" loading="lazy" decoding="async" class="size-full object-cover">
                                     @endif
 
                                     <span class="absolute inset-x-0 bottom-0 truncate bg-linear-to-t from-slate-950/80 to-transparent px-2.5 pt-6 pb-1.5 text-xs text-white">{{ $file->name }}</span>

@@ -80,13 +80,19 @@
                         {{-- Imagen --}}
                         <div>
                             <div class="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-                                <span class="block text-sm font-medium text-slate-700">Imagen <span class="text-red-500">*</span></span>
+                                <span class="block text-sm font-medium text-slate-700">Imagen</span>
 
                                 @if ($imageType)
-                                    <button type="button" wire:click="chooseImage" class="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium transition hover:bg-slate-50">
-                                        <x-icon name="search" class="size-4" />
-                                        Cambiar imagen
-                                    </button>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <button type="button" wire:click="chooseImage" class="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium transition hover:bg-slate-50">
+                                            <x-icon name="search" class="size-4" />
+                                            Cambiar imagen
+                                        </button>
+                                        <button type="button" wire:click="removeImage" class="flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50">
+                                            <x-icon name="trash" class="size-4" />
+                                            Quitar imagen
+                                        </button>
+                                    </div>
                                 @endif
                             </div>
 
@@ -110,6 +116,9 @@
                                         {{ $imageType ? 'La imagen ya no está disponible. Elige otra.' : 'Buscar en archivos o pegar un enlace' }}
                                     </span>
                                 </button>
+                                @unless ($imageType)
+                                    <p class="mt-1.5 text-xs text-slate-500">Sin imagen, la página queda sin portada y tu sitio web muestra la suya por defecto.</p>
+                                @endunless
                             @endif
 
                             @error('imageType')

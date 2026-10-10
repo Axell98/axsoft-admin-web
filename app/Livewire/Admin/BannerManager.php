@@ -591,6 +591,8 @@ class BannerManager extends Component
                 'incompatible' => ! $this->isCompatible($slide),
                 'kind' => 'missing',
                 'src' => null,
+                // Miniatura para la vista previa; solo la tienen los archivos del gestor.
+                'thumb' => null,
                 'name' => 'Archivo no disponible',
             ];
 
@@ -605,7 +607,7 @@ class BannerManager extends Component
             $file = $files->get($slide['media_file_id']);
 
             if ($file) {
-                return [...$card, 'kind' => $file->category() === 'video' ? 'video' : 'image', 'src' => $file->url(), 'name' => $file->name];
+                return [...$card, 'kind' => $file->category() === 'video' ? 'video' : 'image', 'src' => $file->url(), 'thumb' => $file->thumbnailUrl(), 'name' => $file->name];
             }
 
             return $card;

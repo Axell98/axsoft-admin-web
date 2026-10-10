@@ -218,13 +218,55 @@ test('guardar de nuevo actualiza la portada de esa pagina sin duplicarla', funct
         ->and(PageCover::where('page', 'contacto')->value('title'))->toBe('Escríbenos');
 });
 
-test('la imagen es obligatoria', function () {
+test('la imagen es opcional: sin ella la pagina queda sin portada', function () {
     Livewire::test(CoverManager::class)
         ->set('title', 'Sin imagen')
         ->call('save')
-        ->assertHasErrors('imageType');
+        ->assertHasNoErrors()
+        ->assertSee('Sin portada');
 
-    expect(PageCover::count())->toBe(0);
+    $cover = PageCover::firstOrFail();
+
+    expect($cover->title)->toBe('Sin imagen')
+        ->and($cover->image_type)->toBeNull()
+        ->and($cover->imageUrl())->toBeNull();
+});
+
+test('se puede quitar la imagen de una portada', function () {
+    $image = coverImage();
+    $cover = makeCover(['image_type' => 'file', 'media_file_id' => $image->id, 'external_url' => null]);
+
+    Livewire::test(CoverManager::class)
+        ->assertSet('imageType', 'file')
+        ->assertSee('Quitar imagen')
+        ->call('removeImage')
+        ->assertSet('imageType', null)
+        ->assertSet('mediaFileId', null)
+        ->assertSet('externalUrl', null)
+        ->assertDontSee('Quitar imagen')
+        ->assertSee('Buscar en archivos o pegar un enlace')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $cover->refresh();
+
+    expect(PageCover::count())->toBe(1)
+        ->and($cover->title)->toBe('Conoce nuestro estudio')
+        ->and($cover->image_type)->toBeNull()
+        ->and($cover->media_file_id)->toBeNull()
+        ->and($cover->external_url)->toBeNull()
+        ->and(MediaFile::whereKey($image->id)->exists())->toBeTrue();
+
+    $this->getJson('/api/v1/covers/nosotros')->assertOk()->assertExactJson(['data' => null]);
+});
+
+test('quitar la imagen no se aplica hasta guardar', function () {
+    $cover = makeCover();
+
+    Livewire::test(CoverManager::class)->call('removeImage');
+
+    expect($cover->refresh()->image_type)->toBe('image_url')
+        ->and($cover->external_url)->toBe('https://sitio.com/portada.jpg');
 });
 
 test('valida el largo del titulo', function () {
@@ -252,7 +294,7 @@ test('rechaza una imagen manipulada al guardar', function (string $type, ?int $f
     'tipo desconocido' => ['otro', null, null],
 ]);
 
-test('al eliminar el archivo del gestor la portada se conserva y pide otra imagen', function () {
+test('al eliminar el archivo del gestor la portada se conserva y pide otra imagen o quitarla', function () {
     $image = coverImage();
     $cover = makeCover(['image_type' => 'file', 'media_file_id' => $image->id, 'external_url' => null]);
 
@@ -266,5 +308,8 @@ test('al eliminar el archivo del gestor la portada se conserva y pide otra image
         ->assertSee('La imagen ya no está disponible')
         ->assertSee('Sin portada')
         ->call('save')
-        ->assertHasErrors('imageType');
+        ->assertHasErrors('imageType')
+        ->call('removeImage')
+        ->call('save')
+        ->assertHasNoErrors();
 });

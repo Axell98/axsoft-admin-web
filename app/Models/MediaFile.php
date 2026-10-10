@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Support\Thumbnail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -30,6 +32,7 @@ class MediaFile extends Model
     {
         static::deleting(function (MediaFile $file): void {
             Storage::disk(self::DISK)->delete($file->path);
+            Thumbnail::delete($file);
         });
     }
 
@@ -58,6 +61,26 @@ class MediaFile extends Model
     public function url(): string
     {
         return Storage::disk(self::DISK)->url($this->path);
+    }
+
+    /**
+     * URL de la miniatura para las vistas previas del panel. Si aún no existe, apunta a la ruta
+     * que la crea; si no es una imagen o el servidor no puede crearlas, es la del original.
+     */
+    public function thumbnailUrl(): string
+    {
+        $path = Thumbnail::path($this);
+
+        if ($path === null) {
+            return $this->url();
+        }
+
+        if (Storage::disk(self::DISK)->exists($path)) {
+            return Storage::disk(self::DISK)->url($path);
+        }
+
+        // Si las rutas del servidor están en caché y aún no incluyen la nueva, se usa el original.
+        return Route::has('admin.files.thumbnail') ? route('admin.files.thumbnail', $this) : $this->url();
     }
 
     /**
