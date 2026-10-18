@@ -18,6 +18,10 @@ class YouTube
     {
         $input = trim($input);
 
+        if (preg_match(self::ID_PATTERN, $input)) {
+            return $input;
+        }
+
         if (stripos($input, '<iframe') !== false) {
             if (! preg_match('/\bsrc\s*=\s*(["\'])(.*?)\1/is', $input, $matches)) {
                 return null;

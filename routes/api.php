@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\BannerController;
 use App\Http\Controllers\Api\CompanyController;
+use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\CoverController;
 use App\Http\Controllers\Api\PopupController;
 use App\Http\Controllers\Api\ProjectCategoryController;
@@ -11,22 +12,26 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| API pública (solo lectura)
+| API pública
 |--------------------------------------------------------------------------
 |
-| Consumida por el sitio web del cliente. No requiere autenticación,
-| por lo que solo debe exponer información que ya es pública.
+| Consumida por el sitio web del cliente.
 |
 */
 
-Route::prefix('v1')->middleware('throttle:api')->group(function () {
-    Route::get('/company', [CompanyController::class, 'show'])->name('api.company');
-    Route::get('/banners', [BannerController::class, 'show'])->name('api.banners');
-    Route::get('/covers', [CoverController::class, 'index'])->name('api.covers');
-    Route::get('/covers/{page}', [CoverController::class, 'show'])->name('api.covers.show');
-    Route::get('/project-categories', [ProjectCategoryController::class, 'index'])->name('api.project-categories');
-    Route::get('/popup', [PopupController::class, 'show'])->name('api.popup');
-    Route::get('/testimonials', [TestimonialController::class, 'index'])->name('api.testimonials');
-    Route::get('/projects', [ProjectController::class, 'index'])->name('api.projects');
-    Route::get('/projects/{slug}', [ProjectController::class, 'show'])->name('api.projects.show');
+Route::prefix('v1')->group(function () {
+    Route::middleware('throttle:api')->group(function () {
+        Route::get('/company', [CompanyController::class, 'show'])->name('api.company');
+        Route::get('/banners', [BannerController::class, 'show'])->name('api.banners');
+        Route::get('/covers', [CoverController::class, 'index'])->name('api.covers');
+        Route::get('/covers/{page}', [CoverController::class, 'show'])->name('api.covers.show');
+        Route::get('/project-categories', [ProjectCategoryController::class, 'index'])->name('api.project-categories');
+        Route::get('/popup', [PopupController::class, 'show'])->name('api.popup');
+        Route::get('/testimonials', [TestimonialController::class, 'index'])->name('api.testimonials');
+        Route::get('/projects', [ProjectController::class, 'index'])->name('api.projects');
+        Route::get('/projects/{slug}', [ProjectController::class, 'show'])->name('api.projects.show');
+    });
+
+    // Envío de formulario de contacto directo sin dependencia de base de datos
+    Route::post('/contacto', [ContactController::class, 'store'])->name('api.contacto.store');
 });

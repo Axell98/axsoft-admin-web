@@ -313,7 +313,17 @@ class ProjectForm extends Component
             'phases' => ['array', 'max:'.Project::MAX_PHASES],
             'phases.*.type' => ['required', Rule::in([ProjectPhase::TYPE_FILE, ProjectPhase::TYPE_IMAGE_URL])],
             'phases.*.media_file_id' => ['nullable', 'required_if:phases.*.type,'.ProjectPhase::TYPE_FILE, 'integer', 'exists:media_files,id'],
-            'phases.*.url' => ['nullable', 'required_if:phases.*.type,'.ProjectPhase::TYPE_IMAGE_URL, 'url:http,https', 'max:2048'],
+            'phases.*.url' => [
+                'nullable',
+                'required_if:phases.*.type,'.ProjectPhase::TYPE_IMAGE_URL,
+                'max:2048',
+                function ($attribute, $value, $fail) {
+                    if (!is_string($value) || $value === '') return;
+                    if (!str_starts_with($value, '/') && !filter_var($value, FILTER_VALIDATE_URL)) {
+                        $fail('La URL debe empezar con http://, https:// o /.');
+                    }
+                },
+            ],
             'phases.*.title' => ['nullable', 'string', 'max:200'],
             'phases.*.content' => ['nullable', 'string', 'max:20000'],
             'videoType' => ['nullable', Rule::in([Project::VIDEO_FILE, Project::VIDEO_YOUTUBE])],
@@ -381,8 +391,8 @@ class ProjectForm extends Component
 
     protected function isValidUrl(mixed $url): bool
     {
-        return is_string($url)
-            && ! Validator::make(['url' => $url], ['url' => ['required', 'url:http,https', 'max:2048']])->fails();
+        if (!is_string($url) || trim($url) === '') return false;
+        return str_starts_with($url, '/') || ! Validator::make(['url' => $url], ['url' => ['required', 'url:http,https', 'max:2048']])->fails();
     }
 
     /**

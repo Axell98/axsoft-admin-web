@@ -106,19 +106,7 @@
                     </p>
                 </div>
 
-                @if ($displayType === 'slider')
-                <div>
-                    <x-toggle label="Mostrar indicadores" wire:model.live="showIndicators" />
-                    <p class="-mt-1 pb-3.5 text-xs text-slate-500">
-                        @if ($showIndicators)
-                            Puedes agregar un texto y una descripción a cada banner con el botón «Texto».
-                        @else
-                            Actívalos para poder agregar texto y descripción a cada banner. Los textos ya escritos se conservan.
-                        @endif
-                    </p>
-                </div>
-                <x-toggle label="Mostrar flechas" wire:model.live="showArrows" />
-                @endif
+                
             </div>
         </aside>
 
@@ -393,14 +381,33 @@
 
                 <div class="mt-4 space-y-4">
                     <div>
-                        <label for="text-title" class="mb-1.5 block text-sm font-medium text-slate-700">Texto</label>
+                        <label for="text-description" class="mb-1.5 block text-sm font-medium text-slate-700">Etiquetas (arriba del título)</label>
+                        <input
+                            id="text-description"
+                            type="text"
+                            wire:model="textDescription"
+                            maxlength="200"
+                            placeholder="Ej. Diseño, Arquitectura"
+                            @class([
+                                'w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm shadow-xs outline-none transition placeholder:text-slate-400 focus:ring-4',
+                                'border-slate-300 focus:border-indigo-500 focus:ring-indigo-500/15' => ! $errors->has('textDescription'),
+                                'border-red-400 focus:border-red-500 focus:ring-red-500/15' => $errors->has('textDescription'),
+                            ])
+                        >
+                        @error('textDescription')
+                            <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                        <p class="mt-1.5 text-xs text-slate-500">Separa las etiquetas con comas (ej. <em>Diseño, Arquitectura</em>).</p>
+                    </div>
+
+                    <div>
+                        <label for="text-title" class="mb-1.5 block text-sm font-medium text-slate-700">Texto / Título principal</label>
                         <input
                             id="text-title"
                             type="text"
                             wire:model="textTitle"
                             maxlength="120"
-                            autofocus
-                            placeholder="Ej. Diseñamos espacios que inspiran"
+                            placeholder="Ej. Creamos espacios con caracter corporativo."
                             @class([
                                 'w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm shadow-xs outline-none transition placeholder:text-slate-400 focus:ring-4',
                                 'border-slate-300 focus:border-indigo-500 focus:ring-indigo-500/15' => ! $errors->has('textTitle'),
@@ -410,26 +417,6 @@
                         @error('textTitle')
                             <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
                         @enderror
-                    </div>
-
-                    <div>
-                        <label for="text-description" class="mb-1.5 block text-sm font-medium text-slate-700">Descripción</label>
-                        <textarea
-                            id="text-description"
-                            rows="3"
-                            wire:model="textDescription"
-                            maxlength="500"
-                            placeholder="Una frase corta que acompañe al texto"
-                            @class([
-                                'w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm shadow-xs outline-none transition placeholder:text-slate-400 focus:ring-4',
-                                'border-slate-300 focus:border-indigo-500 focus:ring-indigo-500/15' => ! $errors->has('textDescription'),
-                                'border-red-400 focus:border-red-500 focus:ring-red-500/15' => $errors->has('textDescription'),
-                            ])
-                        ></textarea>
-                        @error('textDescription')
-                            <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                        <p class="mt-1.5 text-xs text-slate-500">Máximo 120 caracteres para el texto y 500 para la descripción.</p>
                     </div>
                 </div>
 

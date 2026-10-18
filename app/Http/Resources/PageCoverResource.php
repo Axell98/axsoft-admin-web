@@ -19,10 +19,10 @@ class PageCoverResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            // Clave de la página interna: nosotros, servicios...
             'page' => $this->page,
             'title' => $this->title,
             'image_url' => $this->imageUrl(),
+            'is_active' => (bool) $this->is_active,
         ];
     }
 }

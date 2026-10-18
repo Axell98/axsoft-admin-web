@@ -1,4 +1,4 @@
-@props(['name', 'label', 'current' => null, 'file' => null, 'hint' => 'PNG, JPG o WEBP, máximo 2 MB.'])
+@props(['name', 'label', 'current' => null, 'file' => null, 'hint' => 'PNG, JPG o WEBP, maximo 2 MB.'])
 
 <div class="flex items-center gap-5">
     <div class="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-2">
@@ -25,7 +25,7 @@
                 <button
                     type="button"
                     wire:click="removeImage('{{ $name }}')"
-                    wire:confirm="¿Quitar {{ Str::lower($label) }} actual?"
+                    wire:confirm="Eliminar {{ Str::lower($label) }} actual?"
                     class="rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
                 >
                     Quitar
@@ -37,7 +37,7 @@
 
         <p class="text-xs text-slate-500">
             {{ $hint }}
-            @if ($file) Se aplicará al pulsar "Actualizar datos". @endif
+            @if ($file) Se aplicara al pulsar "Actualizar datos". @endif
         </p>
 
         @error($name)

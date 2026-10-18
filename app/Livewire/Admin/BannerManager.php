@@ -45,6 +45,10 @@ class BannerManager extends Component
      */
     public array $slides = [];
 
+    public array $sliderSlides = [];
+
+    public array $videoSlides = [];
+
     public bool $dirty = false;
 
     // Modal «Seleccionar imagen»
@@ -90,9 +94,19 @@ class BannerManager extends Component
         $this->loadSlides($slider);
     }
 
+    protected function isVideoSlide(array $slide): bool
+    {
+        return match ($slide['type'] ?? null) {
+            BannerSlide::TYPE_YOUTUBE => true,
+            BannerSlide::TYPE_FILE => is_numeric($slide['media_file_id'] ?? null)
+                && MediaFile::whereKey((int) $slide['media_file_id'])->whereIn('extension', config('files.types.video', []))->exists(),
+            default => false,
+        };
+    }
+
     protected function loadSlides(BannerSlider $slider): void
     {
-        $this->slides = $slider->slides()->get()->map(fn (BannerSlide $slide) => [
+        $all = $slider->slides()->get()->map(fn (BannerSlide $slide) => [
             'uid' => Str::random(10),
             'id' => $slide->id,
             'type' => $slide->type,
@@ -103,6 +117,11 @@ class BannerManager extends Component
             'description' => $slide->description,
             'link_url' => $slide->link_url,
         ])->all();
+
+        $this->videoSlides = array_values(array_filter($all, fn (array $s) => $this->isVideoSlide($s)));
+        $this->sliderSlides = array_values(array_filter($all, fn (array $s) => ! $this->isVideoSlide($s)));
+
+        $this->slides = $this->isVideo() ? $this->videoSlides : $this->sliderSlides;
 
         $this->dirty = false;
     }
@@ -117,14 +136,16 @@ class BannerManager extends Component
             $this->displayType = BannerSlider::TYPE_SLIDER;
         }
 
-        $before = count($this->slides);
-        $compatible = array_values(array_filter($this->slides, fn (array $slide) => $this->isCompatible($slide)));
-        $this->slides = $this->isVideo() ? array_slice($compatible, 0, 1) : $compatible;
-        $this->dirty = true;
-
-        if (count($this->slides) < $before) {
-            $this->dispatch('notify', message: 'Se quitaron los banners que no corresponden al tipo elegido');
+        // Intercambia de forma no destructiva: conserva las imágenes y el video por separado
+        if ($this->isVideo()) {
+            $this->sliderSlides = $this->slides;
+            $this->slides = $this->videoSlides;
+        } else {
+            $this->videoSlides = $this->slides;
+            $this->slides = $this->sliderSlides;
         }
+
+        $this->dirty = true;
     }
 
     public function updatedScreenPercentage(): void
@@ -421,7 +442,23 @@ class BannerManager extends Component
             ]);
 
             $keep = array_values(array_filter(array_column($this->slides, 'id')));
-            $slider->slides()->whereNotIn('id', $keep)->delete();
+
+            // Solo eliminar los slides del mismo modo activo, preservando el otro tipo
+            $wantsVideo = $this->isVideo();
+            $queryToDelete = $slider->slides()->whereNotIn('id', $keep);
+            if ($wantsVideo) {
+                $videoExtensions = config('files.types.video', []);
+                $queryToDelete->where(function ($q) use ($videoExtensions) {
+                    $q->where('type', BannerSlide::TYPE_YOUTUBE)
+                      ->orWhereHas('mediaFile', fn ($mf) => $mf->whereIn('extension', $videoExtensions));
+                })->delete();
+            } else {
+                $imageExtensions = config('files.types.image', []);
+                $queryToDelete->where(function ($q) use ($imageExtensions) {
+                    $q->where('type', BannerSlide::TYPE_IMAGE_URL)
+                      ->orWhereHas('mediaFile', fn ($mf) => $mf->whereIn('extension', $imageExtensions));
+                })->delete();
+            }
 
             foreach ($this->slides as $position => $slide) {
                 $attributes = [
@@ -515,7 +552,7 @@ class BannerManager extends Component
 
     protected function canEditText(): bool
     {
-        return ! $this->isVideo() && $this->showIndicators;
+        return ! $this->isVideo();
     }
 
     /**

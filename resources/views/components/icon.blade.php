@@ -128,6 +128,15 @@
         @case('menu')
             <path d="M4 6h16M4 12h16M4 18h16"/>
             @break
+        @case('panel-left')
+            <rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/>
+            @break
+        @case('panel-left-close')
+            <rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/><path d="m15 15-3-3 3-3"/>
+            @break
+        @case('panel-left-open')
+            <rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/><path d="m12 9 3 3-3 3"/>
+            @break
         @case('close')
             <path d="M18 6 6 18M6 6l12 12"/>
             @break
