@@ -193,26 +193,27 @@
                             @endif
 
                             {{-- Acciones --}}
-                            <div class="absolute inset-x-0 bottom-0 flex items-center justify-end gap-0.5 bg-linear-to-t from-slate-950/85 to-transparent px-2 pt-8 pb-2 text-sm text-white">
-                                @if ($canEditText)
-                                    <button type="button" wire:click="openTextModal('{{ $card['uid'] }}')" title="Texto y descripción" class="flex items-center gap-1.5 rounded-md px-2 py-1.5 font-medium transition hover:bg-white/15">
-                                        <x-icon name="text" class="size-4" />
-                                        Texto
-                                        @if ($card['title'] || $card['description'])
-                                            <span class="size-1.5 rounded-full bg-emerald-400"></span>
+                            <div class="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-linear-to-t from-slate-950/90 via-slate-950/60 to-transparent px-2.5 pt-8 pb-2 text-xs font-medium text-white">
+                                <div class="flex items-center gap-1 min-w-0">
+                                    @if ($canEditText)
+                                        <button type="button" wire:click="openTextModal('{{ $card['uid'] }}')" title="Texto y descripción" class="flex items-center gap-1.5 rounded-md px-2 py-1.5 transition hover:bg-white/15">
+                                            <x-icon name="text" class="size-3.5 shrink-0" />
+                                            <span>Texto</span>
+                                            @if ($card['title'] || $card['description'])
+                                                <span class="size-1.5 shrink-0 rounded-full bg-emerald-400"></span>
+                                            @endif
+                                        </button>
+                                    @endif
+                                    <button type="button" wire:click="openLinkModal('{{ $card['uid'] }}')" title="{{ $card['link'] ?: 'Agregar enlace' }}" class="flex items-center gap-1.5 rounded-md px-2 py-1.5 transition hover:bg-white/15">
+                                        <x-icon name="link" class="size-3.5 shrink-0" />
+                                        <span>Enlace</span>
+                                        @if ($card['link'])
+                                            <span class="size-1.5 shrink-0 rounded-full bg-emerald-400"></span>
                                         @endif
                                     </button>
-                                @endif
-                                <button type="button" wire:click="openLinkModal('{{ $card['uid'] }}')" title="{{ $card['link'] ?: 'Agregar enlace' }}" class="flex items-center gap-1.5 rounded-md px-2 py-1.5 font-medium transition hover:bg-white/15">
-                                    <x-icon name="link" class="size-4" />
-                                    Enlace
-                                    @if ($card['link'])
-                                        <span class="size-1.5 rounded-full bg-emerald-400"></span>
-                                    @endif
-                                </button>
-                                <button type="button" wire:click="removeSlide('{{ $card['uid'] }}')" class="flex items-center gap-1.5 rounded-md px-2 py-1.5 font-medium transition hover:bg-white/15">
-                                    <x-icon name="trash" class="size-4" />
-                                    Eliminar
+                                </div>
+                                <button type="button" wire:click="removeSlide('{{ $card['uid'] }}')" title="Eliminar banner" aria-label="Eliminar banner" class="flex items-center justify-center rounded-md p-1.5 text-white/80 transition hover:bg-red-500/30 hover:text-red-200">
+                                    <x-icon name="trash" class="size-4 shrink-0" />
                                 </button>
                             </div>
                         </div>
