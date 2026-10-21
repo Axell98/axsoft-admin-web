@@ -42,6 +42,11 @@ return [
         'route' => 'admin.projects',
     ],
     [
+        'label' => 'Staff',
+        'icon' => 'users',
+        'route' => 'admin.staff',
+    ],
+    [
         'label' => 'Testimonios',
         'icon' => 'chat',
         'route' => 'admin.testimonials',

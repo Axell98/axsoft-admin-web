@@ -12,6 +12,7 @@ use App\Livewire\Admin\FileManager;
 use App\Livewire\Admin\PopupManager;
 use App\Livewire\Admin\ProjectForm;
 use App\Livewire\Admin\ProjectIndex;
+use App\Livewire\Admin\StaffManager;
 use App\Livewire\Admin\TestimonialManager;
 use App\Livewire\Auth\Login;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +37,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/proyectos/{project}/editar', ProjectForm::class)->name('projects.edit');
         Route::get('/categorias', CategoryManager::class)->name('categories');
         Route::get('/testimonios', TestimonialManager::class)->name('testimonials');
+        Route::get('/staff', StaffManager::class)->name('staff');
         Route::get('/archivos', FileManager::class)->name('files');
         Route::get('/archivos/{mediaFile}/descargar', FileDownloadController::class)->name('files.download');
         Route::get('/archivos/{mediaFile}/miniatura', FileThumbnailController::class)->name('files.thumbnail');

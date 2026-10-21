@@ -4,7 +4,7 @@ Documentación de la API que consume el sitio web del cliente para mostrar la in
 
 - [Información general](#información-general)
 - [Resumen de endpoints](#resumen-de-endpoints)
-- [Empresa](#1-empresa) · [Banner](#2-banner) · [Pop-up](#3-pop-up) · [Proyectos](#4-proyectos) · [Categorías de proyectos](#5-categorías-de-proyectos) · [Testimonios](#6-testimonios) · [Portadas](#7-portadas)
+- [Empresa](#1-empresa) · [Banner](#2-banner) · [Pop-up](#3-pop-up) · [Proyectos](#4-proyectos) · [Categorías de proyectos](#5-categorías-de-proyectos) · [Testimonios](#6-testimonios) · [Portadas](#7-portadas) · [Staff](#8-staff)
 - [Errores](#errores)
 - [Ejemplos de uso](#ejemplos-de-uso)
 
@@ -44,6 +44,7 @@ Documentación de la API que consume el sitio web del cliente para mostrar la in
 | GET | `/projects/{slug}` | Detalle de un proyecto |
 | GET | `/project-categories` | Categorías que tienen proyectos visibles |
 | GET | `/testimonials` | Testimonios visibles |
+| GET | `/staff` | Equipo de la empresa, en el orden del panel |
 | GET | `/covers` | Portadas activas de las páginas internas |
 | GET | `/covers/{page}` | Portada de una página interna, o `null` si no hay ninguna que mostrar |
 
@@ -601,6 +602,41 @@ Ejemplo: `GET /covers/nosotros`
 | `page` | string | Clave de la página interna (`nosotros`, `servicios`, `proyectos`, `contacto`...) |
 | `title` | string \| null | Título que se muestra sobre la portada. Texto plano |
 | `image_url` | string | URL absoluta de la imagen. Tamaño recomendado: 1920x400 píxeles |
+
+---
+
+## 8. Staff
+
+`GET /staff`
+
+Integrantes del equipo de la empresa, en el **orden definido en el panel** (campo "Orden", de menor a mayor). Sin paginación: el sitio solo debe recorrer la lista tal como llega.
+
+### Respuesta `200`
+
+```json
+{
+  "data": [
+    {
+      "name": "Carlos Ruiz",
+      "role": "Arquitecto principal",
+      "image_url": "https://admin.tuempresa.com/storage/files/2026/10/carlos.jpg"
+    },
+    {
+      "name": "Ana Torres",
+      "role": null,
+      "image_url": null
+    }
+  ]
+}
+```
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `name` | string | Nombre |
+| `role` | string \| null | Cargo |
+| `image_url` | string \| null | URL absoluta de la foto. `null` si no tiene (se sugiere mostrar un avatar con la inicial) |
+
+Si aún no hay integrantes, `data` es una lista vacía (`[]`).
 
 ---
 
