@@ -32,9 +32,9 @@
                 <article wire:key="member-{{ $member->id }}" class="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
                     <div class="relative aspect-square bg-slate-100">
                         @if ($photo)
-                            <img src="{{ $photo }}" alt="{{ $member->name }}" loading="lazy" referrerpolicy="no-referrer" class="size-full object-cover">
+                            <img src="{{ $photo }}" alt="{{ $member->name }}" loading="lazy" referrerpolicy="no-referrer" class="absolute inset-0 size-full object-cover object-top">
                         @else
-                            <div class="flex size-full items-center justify-center text-5xl font-semibold text-slate-300 uppercase">{{ mb_substr($member->name, 0, 1) }}</div>
+                            <div class="absolute inset-0 flex items-center justify-center text-5xl font-semibold text-slate-300 uppercase">{{ mb_substr($member->name, 0, 1) }}</div>
                         @endif
 
                         <span class="absolute top-3 left-3 flex min-w-7 items-center justify-center rounded-full bg-slate-900/75 px-2 py-1 text-xs font-semibold text-white" title="Orden">{{ $member->sort_order }}</span>
