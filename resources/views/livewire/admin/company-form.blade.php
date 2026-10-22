@@ -51,11 +51,9 @@
                 <x-field label="Dirección" name="address" wire:model="address" class="lg:col-span-2" autocomplete="street-address" />
                 <x-field label="Enlace de Google Maps" name="maps_url" type="url" wire:model="maps_url" placeholder="https://maps.google.com/..." />
                 <x-field label="Correo" name="email" type="email" wire:model="email" placeholder="contacto@empresa.com" />
-                <x-field label="Correo secundario" name="email_2" type="email" wire:model="email_2" />
-                <x-field label="Teléfono fijo" name="phone" type="tel" wire:model="phone" placeholder="01 234 5678" />
                 <x-field label="WhatsApp" name="whatsapp" type="tel" wire:model="whatsapp" placeholder="+51 999 999 999" />
-                <x-field label="WhatsApp secundario" name="whatsapp_2" type="tel" wire:model="whatsapp_2" />
-                <x-field label="Horario de atención" name="business_hours" wire:model="business_hours" placeholder="Lun a Vie 9:00 - 18:00" />
+                <x-field label="Teléfono fijo" name="phone" type="tel" wire:model="phone" placeholder="01 234 5678" />
+                <x-field label="Horario de atención" name="business_hours" wire:model="business_hours" class="md:col-span-2 lg:col-span-3" placeholder="Lun a Vie 9:00 - 18:00" />
             </div>
         </section>
 
@@ -67,12 +65,16 @@
                 <x-field label="Sitio web" name="website" type="url" wire:model="website" placeholder="https://www.tuempresa.com" />
                 <x-field label="Facebook" name="facebook" type="url" wire:model="facebook" placeholder="https://www.facebook.com/tu-pagina" />
                 <x-field label="Instagram" name="instagram" type="url" wire:model="instagram" placeholder="https://www.instagram.com/tu-usuario" />
-                <x-field label="YouTube" name="youtube" type="url" wire:model="youtube" placeholder="https://www.youtube.com/@tu-canal" />
                 <x-field label="TikTok" name="tiktok" type="url" wire:model="tiktok" placeholder="https://www.tiktok.com/@tu-usuario" />
-                <x-field label="LinkedIn" name="linkedin" type="url" wire:model="linkedin" placeholder="https://www.linkedin.com/company/tu-empresa" />
-                <x-field label="Behance" name="behance" type="url" wire:model="behance" placeholder="https://www.behance.net/tu-usuario" />
             </div>
         </section>
+
+        {{-- Campos ocultos (conservan valor sin mostrarse en el diseño) --}}
+        <input type="hidden" wire:model="email_2">
+        <input type="hidden" wire:model="whatsapp_2">
+        <input type="hidden" wire:model="youtube">
+        <input type="hidden" wire:model="linkedin">
+        <input type="hidden" wire:model="behance">
 
         {{-- Descripción y SEO --}}
         <section class="mt-10">

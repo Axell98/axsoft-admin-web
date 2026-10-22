@@ -64,9 +64,11 @@
                         >
                             <x-icon name="folder" class="size-5 shrink-0" />
                             <span class="flex-1 truncate">{{ $folder->name }}</span>
-                            <span class="text-xs opacity-70 lg:group-hover:hidden lg:group-focus-within:hidden">{{ $folder->files_count }}</span>
+                            <span class="text-xs opacity-70">{{ $folder->files_count }}</span>
                         </button>
 
+                        {{-- Acciones de editar y eliminar carpetas comentadas --}}
+                        {{--
                         <div class="absolute top-1/2 right-2 flex -translate-y-1/2 items-center gap-0.5 lg:hidden lg:group-focus-within:flex lg:group-hover:flex">
                             <button type="button" wire:click="openFolderModal({{ $folder->id }})" title="Renombrar" aria-label="Renombrar carpeta" class="rounded-md p-1.5 transition hover:bg-black/10 {{ $folderId === $folder->id ? 'text-white' : 'text-slate-500 ' }}">
                                 <x-icon name="pencil" class="size-4" />
@@ -82,10 +84,13 @@
                                 <x-icon name="trash" class="size-4" />
                             </button>
                         </div>
+                    --}}
                     </li>
                 @endforeach
             </ul>
 
+            {{-- Botón nueva carpeta comentado --}}
+            {{--
             <button
                 type="button"
                 wire:click="openFolderModal"
@@ -94,6 +99,7 @@
                 <x-icon name="folder-plus" class="size-5" />
                 Nueva carpeta
             </button>
+            --}}
         </aside>
 
         {{-- Listado --}}
@@ -383,6 +389,8 @@
         </div>
     @endif
 
+    {{-- Modal: crear / renombrar carpeta comentado --}}
+    {{--
     {{-- Modal: crear / renombrar carpeta --}}
     @if ($showFolderModal)
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" x-data x-on:keydown.escape.window="$wire.closeFolderModal()">
@@ -420,4 +428,5 @@
             </form>
         </div>
     @endif
+    --}}
 </div>
