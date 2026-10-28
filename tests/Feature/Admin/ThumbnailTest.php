@@ -20,9 +20,9 @@ function thumbFile(string $name = 'foto.jpg', ?int $width = 1200, int $height = 
     $extension = pathinfo($name, PATHINFO_EXTENSION);
     $path = 'files/2026/10/'.fake()->unique()->lexify('??????????').'.'.$extension;
 
-    $content = $width !== null
-        ? file_get_contents(UploadedFile::fake()->image($name, $width, $height)->getPathname())
-        : 'contenido';
+    // El objeto se guarda en una variable: al destruirse, borra su archivo temporal.
+    $fake = $width !== null ? UploadedFile::fake()->image($name, $width, $height) : null;
+    $content = $fake !== null ? file_get_contents($fake->getPathname()) : 'contenido';
 
     Storage::disk('public')->put($path, $content);
 

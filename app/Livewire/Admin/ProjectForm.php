@@ -318,8 +318,10 @@ class ProjectForm extends Component
                 'required_if:phases.*.type,'.ProjectPhase::TYPE_IMAGE_URL,
                 'max:2048',
                 function ($attribute, $value, $fail) {
-                    if (!is_string($value) || $value === '') return;
-                    if (!str_starts_with($value, '/') && !filter_var($value, FILTER_VALIDATE_URL)) {
+                    if (! is_string($value) || $value === '') {
+                        return;
+                    }
+                    if (! str_starts_with($value, '/') && ! filter_var($value, FILTER_VALIDATE_URL)) {
                         $fail('La URL debe empezar con http://, https:// o /.');
                     }
                 },
@@ -391,7 +393,10 @@ class ProjectForm extends Component
 
     protected function isValidUrl(mixed $url): bool
     {
-        if (!is_string($url) || trim($url) === '') return false;
+        if (! is_string($url) || trim($url) === '') {
+            return false;
+        }
+
         return str_starts_with($url, '/') || ! Validator::make(['url' => $url], ['url' => ['required', 'url:http,https', 'max:2048']])->fails();
     }
 
@@ -411,6 +416,7 @@ class ProjectForm extends Component
                 'uid' => $phase['uid'],
                 'content' => $phase['content'] ?? '',
                 'src' => $phase['type'] === ProjectPhase::TYPE_FILE ? $file?->url() : $phase['url'],
+                'thumb' => $phase['type'] === ProjectPhase::TYPE_FILE ? $file?->thumbnailUrl() : $phase['url'],
                 'name' => $phase['type'] === ProjectPhase::TYPE_FILE ? ($file->name ?? 'Archivo no disponible') : $phase['url'],
             ];
         })->all();

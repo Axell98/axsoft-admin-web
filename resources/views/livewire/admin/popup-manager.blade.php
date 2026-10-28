@@ -194,7 +194,7 @@
                         @foreach ($cards as $index => $card)
                             <div wire:key="item-{{ $card['uid'] }}" class="group relative aspect-video overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
                                 @if ($card['src'])
-                                    <img src="{{ $card['src'] }}" alt="{{ $card['name'] }}" loading="lazy" referrerpolicy="no-referrer" class="size-full object-cover">
+                                    <img src="{{ $card['thumb'] ?? $card['src'] }}" data-original="{{ $card['src'] }}" onerror="this.onerror=null;this.src=this.dataset.original" alt="{{ $card['name'] }}" loading="lazy" decoding="async" referrerpolicy="no-referrer" class="size-full object-cover">
                                 @else
                                     <div class="flex size-full items-center justify-center text-slate-400"><x-icon name="alert" class="size-5" /></div>
                                 @endif

@@ -28,11 +28,12 @@
     @else
         <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             @foreach ($members as $member)
-                @php($photo = $member->imageUrl())
+                @php($photo = $member->thumbnailUrl())
+                @php($original = $member->imageUrl())
                 <article wire:key="member-{{ $member->id }}" class="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
                     <div class="relative aspect-square bg-slate-100">
                         @if ($photo)
-                            <img src="{{ $photo }}" alt="{{ $member->name }}" loading="lazy" referrerpolicy="no-referrer" class="absolute inset-0 size-full object-cover object-top">
+                            <img src="{{ $photo }}" data-original="{{ $original }}" onerror="this.onerror=null;this.src=this.dataset.original" alt="{{ $member->name }}" loading="lazy" decoding="async" referrerpolicy="no-referrer" class="absolute inset-0 size-full object-cover object-top">
                         @else
                             <div class="absolute inset-0 flex items-center justify-center text-5xl font-semibold text-slate-300 uppercase">{{ mb_substr($member->name, 0, 1) }}</div>
                         @endif

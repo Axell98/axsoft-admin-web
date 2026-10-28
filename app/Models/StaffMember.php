@@ -73,6 +73,14 @@ class StaffMember extends Model
         };
     }
 
+    /**
+     * Foto reducida para las vistas previas del panel; si es un link, la misma URL.
+     */
+    public function thumbnailUrl(): ?string
+    {
+        return $this->image_type === self::IMAGE_FILE ? $this->mediaFile?->thumbnailUrl() : $this->imageUrl();
+    }
+
     protected function casts(): array
     {
         return [

@@ -45,11 +45,12 @@
     @else
         <div class="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
             @foreach ($projects as $project)
-                @php($cover = $project->coverUrl())
+                @php($cover = $project->coverThumbnailUrl())
+                @php($coverOriginal = $project->coverUrl())
                 <article wire:key="project-{{ $project->id }}" class="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
                     <a href="{{ route('admin.projects.edit', $project) }}" wire:navigate class="relative block aspect-[4/3] overflow-hidden bg-slate-100">
                         @if ($cover)
-                            <img src="{{ $cover }}" alt="{{ $project->title }}" loading="lazy" referrerpolicy="no-referrer" @class(['size-full object-cover transition', 'opacity-60 grayscale' => ! $project->is_published])>
+                            <img src="{{ $cover }}" data-original="{{ $coverOriginal }}" onerror="this.onerror=null;this.src=this.dataset.original" alt="{{ $project->title }}" loading="lazy" decoding="async" referrerpolicy="no-referrer" @class(['size-full object-cover transition', 'opacity-60 grayscale' => ! $project->is_published])>
                         @else
                             <div class="flex size-full items-center justify-center text-slate-300">
                                 <x-icon name="image" class="size-12" />

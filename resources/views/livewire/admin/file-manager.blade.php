@@ -179,7 +179,7 @@
                                         <td class="max-w-0 px-3 py-3 md:max-w-sm lg:max-w-md xl:max-w-lg">
                                             <a href="{{ $file->url() }}" target="_blank" rel="noopener" class="flex items-center gap-3">
                                                 @if ($file->isImage())
-                                                    <img src="{{ $file->url() }}" alt="" loading="lazy" class="size-10 shrink-0 rounded-lg border border-slate-200 bg-slate-50 object-cover">
+                                                    <img src="{{ $file->thumbnailUrl() }}" data-original="{{ $file->url() }}" onerror="this.onerror=null;this.src=this.dataset.original" alt="" loading="lazy" decoding="async" class="size-10 shrink-0 rounded-lg border border-slate-200 bg-slate-50 object-cover">
                                                 @else
                                                     <x-file-icon :category="$file->category()" />
                                                 @endif
@@ -391,7 +391,7 @@
 
     {{-- Modal: crear / renombrar carpeta comentado --}}
     {{--
-    {{-- Modal: crear / renombrar carpeta --}}
+    Modal: crear / renombrar carpeta
     @if ($showFolderModal)
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" x-data x-on:keydown.escape.window="$wire.closeFolderModal()">
             <div wire:click="closeFolderModal" class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"></div>

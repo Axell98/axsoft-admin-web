@@ -50,6 +50,14 @@ class ProjectPhase extends Model
         return $this->type === self::TYPE_FILE ? $this->mediaFile?->url() : $this->external_url;
     }
 
+    /**
+     * Imagen reducida para las vistas previas del panel; si es un link, la misma URL.
+     */
+    public function thumbnailUrl(): ?string
+    {
+        return $this->type === self::TYPE_FILE ? $this->mediaFile?->thumbnailUrl() : $this->external_url;
+    }
+
     protected function casts(): array
     {
         return [

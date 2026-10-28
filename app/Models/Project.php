@@ -123,6 +123,16 @@ class Project extends Model
         return $first?->imageUrl();
     }
 
+    /**
+     * Portada reducida para el listado del panel.
+     */
+    public function coverThumbnailUrl(): ?string
+    {
+        $first = $this->relationLoaded('phases') ? $this->phases->first() : $this->phases()->with('mediaFile')->first();
+
+        return $first?->thumbnailUrl();
+    }
+
     public function videoKind(): ?string
     {
         return match ($this->video_type) {

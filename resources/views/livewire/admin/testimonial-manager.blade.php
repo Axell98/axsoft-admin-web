@@ -28,12 +28,13 @@
     @else
         <div class="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
             @foreach ($testimonials as $testimonial)
-                @php($photo = $testimonial->imageUrl())
+                @php($photo = $testimonial->thumbnailUrl())
+                @php($original = $testimonial->imageUrl())
                 <article wire:key="testimonial-{{ $testimonial->id }}" class="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
                     <div @class(['flex flex-1 flex-col gap-4 p-5', 'opacity-60' => ! $testimonial->is_published])>
                         <div class="flex items-center gap-3">
                             @if ($photo)
-                                <img src="{{ $photo }}" alt="{{ $testimonial->name }}" loading="lazy" referrerpolicy="no-referrer" class="size-14 shrink-0 rounded-full object-cover ring-2 ring-slate-100">
+                                <img src="{{ $photo }}" data-original="{{ $original }}" onerror="this.onerror=null;this.src=this.dataset.original" alt="{{ $testimonial->name }}" loading="lazy" decoding="async" referrerpolicy="no-referrer" class="size-14 shrink-0 rounded-full object-cover ring-2 ring-slate-100">
                             @else
                                 <span class="flex size-14 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-lg font-semibold text-indigo-600 uppercase">{{ mb_substr($testimonial->name, 0, 1) }}</span>
                             @endif

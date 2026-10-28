@@ -377,7 +377,7 @@ class PopupManager extends Component
             $file = $files->get($item['media_file_id']);
 
             if ($file) {
-                return [...$card, 'kind' => $file->category() === 'video' ? 'video' : 'image', 'src' => $file->url(), 'name' => $file->name];
+                return [...$card, 'kind' => $file->category() === 'video' ? 'video' : 'image', 'src' => $file->url(), 'thumb' => $file->thumbnailUrl(), 'name' => $file->name];
             }
 
             return $card;

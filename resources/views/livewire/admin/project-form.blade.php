@@ -123,7 +123,7 @@
                         <div class="grid gap-5 md:grid-cols-[14rem_minmax(0,1fr)]">
                             <div class="aspect-video overflow-hidden rounded-xl border border-slate-200 bg-slate-100 md:aspect-[4/3]">
                                 @if ($card['src'])
-                                    <img src="{{ $card['src'] }}" alt="{{ $card['name'] }}" loading="lazy" referrerpolicy="no-referrer" class="size-full object-cover">
+                                    <img src="{{ $card['thumb'] ?? $card['src'] }}" data-original="{{ $card['src'] }}" onerror="this.onerror=null;this.src=this.dataset.original" alt="{{ $card['name'] }}" loading="lazy" decoding="async" referrerpolicy="no-referrer" class="size-full object-cover">
                                 @else
                                     <div class="flex size-full flex-col items-center justify-center gap-1 text-slate-400">
                                         <x-icon name="alert" class="size-6" />
